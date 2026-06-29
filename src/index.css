@@ -1,0 +1,186 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700&display=swap")
+layer(base);
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..1&display=swap")
+layer(base);
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-*: initial;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-headline-lg: "Montserrat", sans-serif;
+  --font-headline-md: "Montserrat", sans-serif;
+  --font-headline-sm: "Montserrat", sans-serif;
+  --font-body-lg: "Inter", system-ui, sans-serif;
+  --font-body-md: "Inter", system-ui, sans-serif;
+  --font-body-sm: "Inter", system-ui, sans-serif;
+  --font-label-lg: "Inter", system-ui, sans-serif;
+  --font-label-md: "Inter", system-ui, sans-serif;
+  --font-button: "Inter", system-ui, sans-serif;
+
+  --color-on-error-container: #93000a;
+  --color-border-subtle: #e8e8e8;
+  --color-tertiary-container: #747478;
+  --color-on-tertiary: #ffffff;
+  --color-on-primary-container: #fffbff;
+  --color-inverse-surface: #2f3131;
+  --color-inverse-primary: #ffb59a;
+  --color-error-container: #ffdad6;
+  --color-primary-container: #c74e17;
+  --color-surface-card: #ffffff;
+  --color-on-secondary-fixed: #1b1c1c;
+  --color-on-surface: #1a1c1c;
+  --color-secondary-fixed: #e4e2e1;
+  --color-background: #ffffff;
+  --color-on-error: #ffffff;
+  --color-surface-variant: #f5f5f5;
+  --color-on-surface-variant: #584239;
+  --color-primary-fixed: #ffdbce;
+  --color-on-tertiary-fixed-variant: #46464a;
+  --color-inverse-on-surface: #f1f1f1;
+  --color-text-main: #252525;
+  --color-surface-bright: #ffffff;
+  --color-tertiary-fixed: #e3e2e6;
+  --color-outline-variant: #e0c0b5;
+  --color-surface-container: #f5f5f5;
+  --color-on-tertiary-container: #fefcff;
+  --color-on-secondary-container: #656464;
+  --color-tertiary-fixed-dim: #c7c6ca;
+  --color-surface-container-highest: #e2e2e2;
+  --color-primary-fixed-dim: #ffb59a;
+  --color-on-primary: #ffffff;
+  --color-secondary-container: #f0f0f0;
+  --color-on-tertiary-fixed: #1b1b1f;
+  --color-status-error: #bf3111;
+  --color-surface-container-high: #eaeaea;
+  --color-on-secondary: #ffffff;
+  --color-surface: #ffffff;
+  --color-on-background: #1a1c1c;
+  --color-outline: #8c7168;
+  --color-on-secondary-fixed-variant: #474746;
+  --color-tertiary: #5b5c60;
+  --color-status-success: #10b981;
+  --color-on-primary-fixed: #370d00;
+  --color-on-primary-fixed-variant: #802a00;
+  --color-surface-tint: #a83a00;
+  --color-surface-container-low: #fafafa;
+  --color-primary: #dd5e27;
+  --color-error: #ba1a1a;
+  --color-text-muted: #606064;
+  --color-surface-dim: #f0f0f0;
+  --color-secondary-fixed-dim: #c8c6c5;
+  --color-secondary: #6b6b6b;
+
+  --radius: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
+
+  --spacing-unit: 4px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  --spacing-gutter: 24px;
+  --spacing-container-max: 1280px;
+
+  --text-headline-lg: 2rem;
+  --text-headline-md: 1.5rem;
+  --text-headline-sm: 1.125rem;
+  --text-body-lg: 1rem;
+  --text-body-md: 0.875rem;
+  --text-body-sm: 0.75rem;
+  --text-label-lg: 0.875rem;
+  --text-label-md: 0.75rem;
+}
+
+.dark {
+  --color-background: #1a1c1c;
+  --color-on-background: #f1f1f1;
+  --color-surface: #1a1c1c;
+  --color-surface-dim: #2f3131;
+  --color-surface-card: #252525;
+  --color-surface-container-low: #1e2020;
+  --color-surface-container: #2a2c2c;
+  --color-surface-container-high: #353737;
+  --color-surface-container-highest: #3b3d3d;
+  --color-surface-bright: #1a1c1c;
+  --color-surface-container-lowest: #1a1c1c;
+  --color-surface-variant: #2a2c2c;
+  --color-text-main: #f1f1f1;
+  --color-text-muted: #a0a0a4;
+  --color-secondary: #a0a0a4;
+  --color-on-secondary-fixed: #f1f1f1;
+  --color-secondary-fixed: #474746;
+  --color-secondary-container: #474746;
+  --color-border-subtle: #353737;
+  --color-primary: #ffb59a;
+  --color-primary-container: #dd5e27;
+  --color-primary-fixed: #ffdbce;
+  --color-primary-fixed-dim: #ffb59a;
+  --color-on-primary: #370d00;
+  --color-inverse-surface: #f1f1f1;
+  --color-inverse-primary: #a83a00;
+  --color-outline-variant: #584239;
+}
+
+@layer base {
+  * {
+    @apply border-border-subtle;
+  }
+  body {
+    @apply bg-background text-text-main;
+    font-family: "Inter", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+}
+
+@layer components {
+  .hover-lift {
+    transition: all 0.3s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 15px rgba(221, 94, 39, 0.15);
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+  font-family: "Material Symbols Outlined", sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "liga";
+}
