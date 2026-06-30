@@ -99,7 +99,16 @@ export function StudentTableSection() {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left">
+        <table className="w-full text-left table-fixed">
+          <colgroup>
+            <col />
+            <col className="w-[100px]" />
+            <col className="w-[90px]" />
+            <col className="w-[90px]" />
+            <AdminOnly>
+              <col className="w-[100px]" />
+            </AdminOnly>
+          </colgroup>
           <thead className="bg-surface-container-low text-[--text-label-md] text-secondary uppercase tracking-widest border-b border-border-subtle">
             <tr>
               <th className="px-lg py-md font-medium">ФИО Студента</th>
@@ -114,20 +123,27 @@ export function StudentTableSection() {
           <tbody className="divide-y divide-border-subtle">
             {hasMockData ? (
               mockStudents.map((student) => (
-                <tr key={student.id} className="hover:bg-surface-container-low transition-colors group">
+                <tr
+                  key={student.id}
+                  className="hover:bg-surface-container-low transition-colors group"
+                >
                   <td className="px-lg py-md">
-                    <div className="flex items-center space-x-md">
-                      <div className="w-8 h-8 bg-secondary-fixed rounded-full flex items-center justify-center text-xs font-bold">
+                    <div className="flex items-center space-x-md min-w-0">
+                      <div className="w-8 h-8 bg-secondary-fixed rounded-full flex items-center justify-center text-xs font-bold shrink-0">
                         {student.initials}
                       </div>
-                      <span className="text-[--text-body-md] font-medium">{student.name}</span>
+                      <span className="text-[--text-body-md] font-medium truncate">
+                        {student.name}
+                      </span>
                     </div>
                   </td>
-                  <td className="px-lg py-md text-[--text-body-sm] text-secondary font-mono">
+                  <td className="px-lg py-md text-[--text-body-sm] text-secondary font-mono truncate">
                     {student.studentId}
                   </td>
                   <td className="px-lg py-md text-[--text-body-sm]">{student.course} Курс</td>
-                  <td className="px-lg py-md font-bold text-primary">{student.rating}</td>
+                  <td className="px-lg py-md font-bold text-primary">
+                    {formatNumber(student.rating)}
+                  </td>
                   <AdminOnly>
                     <td className="px-lg py-md">
                       <input
@@ -152,10 +168,20 @@ export function StudentTableSection() {
                       <Skeleton className="h-4 w-32" />
                     </div>
                   </td>
-                  <td className="px-lg py-md"><Skeleton className="h-4 w-16" /></td>
-                  <td className="px-lg py-md"><Skeleton className="h-4 w-12" /></td>
-                  <td className="px-lg py-md"><Skeleton className="h-4 w-10" /></td>
-                  <AdminOnly><td className="px-lg py-md"><Skeleton className="h-4 w-4" /></td></AdminOnly>
+                  <td className="px-lg py-md">
+                    <Skeleton className="h-4 w-16" />
+                  </td>
+                  <td className="px-lg py-md">
+                    <Skeleton className="h-4 w-12" />
+                  </td>
+                  <td className="px-lg py-md">
+                    <Skeleton className="h-4 w-10" />
+                  </td>
+                  <AdminOnly>
+                    <td className="px-lg py-md">
+                      <Skeleton className="h-4 w-4" />
+                    </td>
+                  </AdminOnly>
                 </tr>
               ))
             ) : error ? (
@@ -172,20 +198,27 @@ export function StudentTableSection() {
               </tr>
             ) : (
               students.map((student) => (
-                <tr key={student.id} className="hover:bg-surface-container-low transition-colors group">
+                <tr
+                  key={student.id}
+                  className="hover:bg-surface-container-low transition-colors group"
+                >
                   <td className="px-lg py-md">
-                    <div className="flex items-center space-x-md">
-                      <div className="w-8 h-8 bg-secondary-fixed rounded-full flex items-center justify-center text-xs font-bold">
+                    <div className="flex items-center space-x-md min-w-0">
+                      <div className="w-8 h-8 bg-secondary-fixed rounded-full flex items-center justify-center text-xs font-bold shrink-0">
                         {student.initials}
                       </div>
-                      <span className="text-[--text-body-md] font-medium">{student.name}</span>
+                      <span className="text-[--text-body-md] font-medium truncate">
+                        {student.name}
+                      </span>
                     </div>
                   </td>
-                  <td className="px-lg py-md text-[--text-body-sm] text-secondary font-mono">
+                  <td className="px-lg py-md text-[--text-body-sm] text-secondary font-mono truncate">
                     {student.studentId}
                   </td>
                   <td className="px-lg py-md text-[--text-body-sm]">{student.course} Курс</td>
-                  <td className="px-lg py-md font-bold text-primary">{student.rating}</td>
+                  <td className="px-lg py-md font-bold text-primary">
+                    {formatNumber(student.rating)}
+                  </td>
                   <AdminOnly>
                     <td className="px-lg py-md">
                       <input

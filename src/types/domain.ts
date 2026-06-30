@@ -109,6 +109,15 @@ export interface ScholarshipFilter {
   tags?: string[];
 }
 
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: "info" | "warning" | "success" | "error";
+  read: boolean;
+  createdAt: string;
+}
+
 export interface UserAccount {
   id: string;
   name: string;

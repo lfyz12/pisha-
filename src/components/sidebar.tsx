@@ -26,7 +26,7 @@ export function Sidebar() {
     ...(isAdmin ? [{ icon: "group", label: "База студентов", path: "/dashboard/admin" }] : []),
     { icon: "payments", label: "Мои стипендии", path: "/dashboard/scholarships" },
     { icon: "analytics", label: "Аналитика", path: "/dashboard/analytics" },
-    { icon: "smart_toy", label: "ИИ-Помощник", path: "#" },
+    { icon: "smart_toy", label: "ИИ-Помощник", path: "/dashboard/chat" },
   ];
 
   const isActive = (path: string) => {
@@ -44,7 +44,11 @@ export function Sidebar() {
     <aside className="h-screen w-64 flex-col flex sticky top-0 left-0 border-r border-border-subtle bg-surface-card z-50">
       <div className="flex items-center px-5 h-20 border-b border-border-subtle">
         <div className="w-36 shrink-0 flex items-center justify-center">
-          <img src={isDark ? "/logo.png" : "/logodark.png"} alt="logo" className="w-full h-auto object-contain" />
+          <img
+            src={isDark ? "/logo.png" : "/logodark.png"}
+            alt="logo"
+            className="w-full h-auto object-contain"
+          />
         </div>
       </div>
 

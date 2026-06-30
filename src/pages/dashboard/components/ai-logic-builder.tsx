@@ -22,15 +22,13 @@ export function AILogicBuilderSection() {
           <Skeleton className="h-8 w-48 rounded-md" />
         </div>
       ) : error ? (
-        <div className="text-status-error text-sm relative z-10">
-          Ошибка загрузки правил
-        </div>
+        <div className="text-status-error text-sm relative z-10">Ошибка загрузки правил</div>
       ) : rules.length === 0 ? (
         <div className="space-y-md relative z-10">
           <div className="flex flex-wrap items-center gap-sm bg-surface-container-low p-md rounded-md border border-border-subtle">
             <span className="text-[--text-label-lg] font-bold text-secondary">ЕСЛИ</span>
             <div className="bg-surface-card border border-border-subtle px-sm py-xs rounded text-[--text-body-sm] font-medium">
-              GPA &gt; 4.5
+              Баллы &gt; 4.5
             </div>
             <span className="text-[--text-label-lg] font-bold text-secondary">И</span>
             <div className="bg-surface-card border border-border-subtle px-sm py-xs rounded text-[--text-body-sm] font-medium">

@@ -1,5 +1,6 @@
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Icon } from "@/components/ui/icon";
+import { NotificationBell } from "@/components/ui/notification-bell";
 import { useAuthStore } from "@/stores";
 
 export function Header() {
@@ -21,22 +22,25 @@ export function Header() {
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <div className="hidden sm:flex flex-col items-end mr-1">
+        <Link
+          to="/dashboard/profile"
+          className="hidden sm:flex flex-col items-end mr-1 hover:opacity-80 transition-opacity"
+        >
           <span className="text-sm font-semibold text-text-main">
             {currentUser?.name ?? "Гость"}
           </span>
           <span className="text-xs text-secondary capitalize">
             {currentUser?.role === "admin" ? "Администратор" : "Студент"} • УПИШ УрФУ
           </span>
-        </div>
+        </Link>
         <div className="flex items-center gap-1">
-          <button className="w-9 h-9 flex items-center justify-center text-secondary hover:bg-surface-container-low rounded-lg transition-colors relative">
-            <Icon name="notifications" className="text-[22px]" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
-          </button>
-          <button className="w-9 h-9 flex items-center justify-center text-secondary hover:bg-surface-container-low rounded-lg transition-colors">
+          <NotificationBell />
+          <Link
+            to="/dashboard/profile"
+            className="w-9 h-9 flex items-center justify-center text-secondary hover:bg-surface-container-low rounded-lg transition-colors"
+          >
             <Icon name="account_circle" className="text-[22px]" />
-          </button>
+          </Link>
           <button
             onClick={() => {
               logout();

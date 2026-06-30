@@ -1,6 +1,7 @@
 import { AdminOnly } from "@/components/admin-only";
 import { useDashboardMetrics } from "@/hooks";
 import { useMockDataStore } from "@/stores";
+import { formatNumber } from "@/lib/utils";
 import {
   MetricCard,
   BarChartSection,
@@ -19,14 +20,20 @@ export default function DashboardPage() {
   const mockGpa = hasMockData ? mockStore.getGpaDistribution() : undefined;
   const mockAttendance = hasMockData ? mockStore.getAttendanceTrends() : undefined;
 
-  const { data: metricsData, isLoading: metricsLoading, error: metricsError } = useDashboardMetrics();
+  const {
+    data: metricsData,
+    isLoading: metricsLoading,
+    error: metricsError,
+  } = useDashboardMetrics();
   const m = hasMockData ? mockMetrics : metricsData?.data;
 
   return (
     <div className="space-y-xl">
       {mockStore.parsedData && (
         <div className="bg-primary-fixed/20 border border-primary/30 text-primary text-sm px-4 py-2 rounded-lg flex items-center gap-2">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
+            check_circle
+          </span>
           Данные из Excel: {mockStore.parsedData.students.length} студентов ({mockStore.fileName})
         </div>
       )}
@@ -45,8 +52,8 @@ export default function DashboardPage() {
           error={!!metricsError && !hasMockData}
         />
         <MetricCard
-          label="Средний GPA"
-          value={metricsLoading && !hasMockData ? undefined : m?.averageGpa?.toFixed(2)}
+          label="Средний балл"
+          value={metricsLoading && !hasMockData ? undefined : formatNumber(m?.averageGpa)}
           secondary="/ 5.0"
           progress={m ? { value: (m.averageGpa / 5) * 100, max: 100 } : undefined}
           icon="star"

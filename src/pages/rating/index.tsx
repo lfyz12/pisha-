@@ -7,11 +7,9 @@ import { useMockDataStore } from "@/stores";
 import { parseRatingExcel } from "@/lib/parse-rating-excel";
 import { importExcelFromFile } from "@/lib/import-excel";
 import type { RatingStudent, RatingStats } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, formatNumber } from "@/lib/utils";
 
 const courses = ["Все", "1 курс", "2 курс", "3 курс", "4 курс"];
-
-const fmt = (n: number) => Number(n.toFixed(2)).toString();
 
 const PAGE_SIZE = 30;
 
@@ -95,12 +93,16 @@ export default function RatingPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
-          <h3 className="text-2xl font-headline font-bold text-text-main">Рейтинг студентов УПИШ</h3>
+          <h3 className="text-2xl font-headline font-bold text-text-main">
+            Рейтинг студентов УПИШ
+          </h3>
           <p className="text-sm text-secondary">Бакалавриат 1–4 курс | Семестр: Осенний 2024</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative w-56">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-sm">search</span>
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-sm">
+              search
+            </span>
             <input
               type="text"
               value={searchTerm}
@@ -195,27 +197,47 @@ export default function RatingPage() {
         ) : (
           <>
             <div className="bg-surface-card p-4 rounded-lg border-t-4 border-primary border border-border-subtle">
-              <p className="text-xs font-label text-secondary uppercase tracking-widest">Мое место</p>
+              <p className="text-xs font-label text-secondary uppercase tracking-widest">
+                Мое место
+              </p>
               <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-3xl font-headline font-bold text-primary">{stats.myPlace}</span>
+                <span className="text-3xl font-headline font-bold text-primary">
+                  {stats.myPlace}
+                </span>
                 {stats.myPlaceChange !== 0 && (
-                  <span className={cn("text-xs font-semibold flex items-center", stats.myPlaceChange > 0 ? "text-status-success" : "text-status-error")}>
+                  <span
+                    className={cn(
+                      "text-xs font-semibold flex items-center",
+                      stats.myPlaceChange > 0 ? "text-status-success" : "text-status-error"
+                    )}
+                  >
                     <Icon name="trending_up" className="text-sm" />
-                    {stats.myPlaceChange > 0 ? "+" : ""}{stats.myPlaceChange}
+                    {stats.myPlaceChange > 0 ? "+" : ""}
+                    {stats.myPlaceChange}
                   </span>
                 )}
               </div>
             </div>
             <div className="bg-surface-card p-4 rounded-lg border-t-4 border-text-main border border-border-subtle">
-              <p className="text-xs font-label text-secondary uppercase tracking-widest">Топ 1 балл</p>
-              <p className="text-3xl font-headline font-bold text-text-main mt-1">{stats.topScore}</p>
+              <p className="text-xs font-label text-secondary uppercase tracking-widest">
+                Топ 1 балл
+              </p>
+              <p className="text-3xl font-headline font-bold text-text-main mt-1">
+                {formatNumber(stats.topScore)}
+              </p>
             </div>
             <div className="bg-surface-card p-4 rounded-lg border-t-4 border-secondary border border-border-subtle">
-              <p className="text-xs font-label text-secondary uppercase tracking-widest">Средний по курсу</p>
-              <p className="text-3xl font-headline font-bold text-text-main mt-1">{stats.averageScore}</p>
+              <p className="text-xs font-label text-secondary uppercase tracking-widest">
+                Средний по курсу
+              </p>
+              <p className="text-3xl font-headline font-bold text-text-main mt-1">
+                {formatNumber(stats.averageScore)}
+              </p>
             </div>
             <div className="bg-primary p-4 rounded-lg border border-border-subtle flex flex-col justify-between">
-              <p className="text-xs font-label text-primary-fixed uppercase tracking-widest">Активность</p>
+              <p className="text-xs font-label text-primary-fixed uppercase tracking-widest">
+                Активность
+              </p>
               <div className="flex items-center justify-between text-on-primary mt-1">
                 <span className="text-lg font-headline font-bold">{stats.activityLevel}</span>
                 <Icon name="bolt" className="text-3xl opacity-50" />
@@ -227,17 +249,37 @@ export default function RatingPage() {
 
       <div className="bg-surface-card rounded-lg border border-border-subtle overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-fixed">
+            <colgroup>
+              <col className="w-[52px]" />
+              <col />
+              <col className="w-[60px]" />
+              <col className="w-[90px]" />
+              <col className="w-[80px]" />
+              <col className="w-[90px]" />
+              <col className="w-[100px]" />
+              <col className="w-[72px]" />
+            </colgroup>
             <thead>
               <tr className="bg-surface-container-low border-b border-border-subtle">
                 <th className="px-4 py-3 text-xs font-label text-secondary uppercase">Место</th>
                 <th className="px-4 py-3 text-xs font-label text-secondary uppercase">Студент</th>
-                <th className="px-4 py-3 text-xs font-label text-secondary uppercase text-center">Курс</th>
+                <th className="px-4 py-3 text-xs font-label text-secondary uppercase text-center">
+                  Курс
+                </th>
                 <th className="px-4 py-3 text-xs font-label text-secondary uppercase">Группа</th>
-                <th className="px-4 py-3 text-xs font-label text-secondary uppercase text-right">Учеба</th>
-                <th className="px-4 py-3 text-xs font-label text-secondary uppercase text-right">Активность</th>
-                <th className="px-4 py-3 text-xs font-label text-secondary uppercase text-right">Общий балл</th>
-                <th className="px-4 py-3 text-xs font-label text-secondary uppercase text-center">Динамика</th>
+                <th className="px-4 py-3 text-xs font-label text-secondary uppercase text-right">
+                  Учеба
+                </th>
+                <th className="px-4 py-3 text-xs font-label text-secondary uppercase text-right">
+                  Активность
+                </th>
+                <th className="px-4 py-3 text-xs font-label text-secondary uppercase text-right">
+                  Общий балл
+                </th>
+                <th className="px-4 py-3 text-xs font-label text-secondary uppercase text-center">
+                  Динамика
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
@@ -245,7 +287,9 @@ export default function RatingPage() {
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
                     {Array.from({ length: 8 }).map((_, j) => (
-                      <td key={j} className="px-4 py-3"><Skeleton className="h-4 w-12" /></td>
+                      <td key={j} className="px-4 py-3">
+                        <Skeleton className="h-4 w-12" />
+                      </td>
                     ))}
                   </tr>
                 ))
@@ -263,12 +307,17 @@ export default function RatingPage() {
                       "transition-colors",
                       student.isCurrentUser
                         ? "bg-surface-card border-2 border-primary ring-4 ring-primary-fixed/30 scale-[1.01] shadow-lg"
-                        : "hover:bg-surface-container-lowest"
+                        : "hover:bg-accent"
                     )}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        <span className={cn("text-lg font-headline font-bold", student.rank === 1 ? "text-primary" : "text-text-main")}>
+                        <span
+                          className={cn(
+                            "text-lg font-headline font-bold",
+                            student.rank === 1 ? "text-primary" : "text-text-main"
+                          )}
+                        >
                           {student.rank}
                         </span>
                         {student.rank === 1 && (
@@ -277,16 +326,28 @@ export default function RatingPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
                         <div className="w-9 h-9 rounded-full bg-secondary-fixed flex items-center justify-center text-xs font-bold shrink-0">
-                          {student.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                          {student.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)}
                         </div>
-                        <div>
-                          <span className={cn("text-sm", student.isCurrentUser ? "font-bold" : "font-medium", "text-text-main")}>
+                        <div className="min-w-0 truncate">
+                          <span
+                            className={cn(
+                              "text-sm truncate block",
+                              student.isCurrentUser ? "font-bold" : "font-medium",
+                              "text-text-main"
+                            )}
+                          >
                             {student.name}
                           </span>
                           {student.isCurrentUser && (
-                            <span className="ml-2 bg-primary text-on-primary text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">ВЫ</span>
+                            <span className="ml-2 bg-primary text-on-primary text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
+                              ВЫ
+                            </span>
                           )}
                         </div>
                       </div>
@@ -297,22 +358,36 @@ export default function RatingPage() {
                         {student.group}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-sm font-medium">{fmt(student.academicScore)}</td>
-                    <td className="px-4 py-3 text-right text-sm font-medium">{fmt(student.activityScore)}</td>
+                    <td className="px-4 py-3 text-right text-sm font-medium">
+                      {formatNumber(student.academicScore)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm font-medium">
+                      {formatNumber(student.activityScore)}
+                    </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="text-lg font-headline font-bold text-primary">{fmt(student.totalScore)}</span>
+                      <span className="text-lg font-headline font-bold text-primary">
+                        {formatNumber(student.totalScore)}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       {student.trend === "up" && (
                         <div className="flex flex-col items-center text-status-success">
                           <Icon name="expand_less" />
-                          {student.trendValue != null && <span className="text-[10px] font-bold">+{fmt(student.trendValue)}</span>}
+                          {student.trendValue != null && (
+                            <span className="text-[10px] font-bold">
+                              +{formatNumber(student.trendValue)}
+                            </span>
+                          )}
                         </div>
                       )}
                       {student.trend === "down" && (
                         <div className="flex flex-col items-center text-status-error">
                           <Icon name="expand_more" />
-                          {student.trendValue != null && <span className="text-[10px] font-bold">{fmt(student.trendValue)}</span>}
+                          {student.trendValue != null && (
+                            <span className="text-[10px] font-bold">
+                              {formatNumber(student.trendValue)}
+                            </span>
+                          )}
                         </div>
                       )}
                       {student.trend === "stable" && (

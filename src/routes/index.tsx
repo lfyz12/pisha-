@@ -10,6 +10,7 @@ import ProfilePage from "@/pages/profile";
 import AdminPage from "@/pages/admin";
 import RatingPage from "@/pages/rating";
 import ScholarshipsPage from "@/pages/scholarships";
+import ChatPage from "@/pages/chat";
 import NotFoundPage from "@/pages/errors/not-found";
 import ForbiddenPage from "@/pages/errors/forbidden";
 
@@ -41,6 +42,7 @@ export const router = createBrowserRouter([
           { path: "admin", element: <AdminPage /> },
           { path: "rating", element: <RatingPage /> },
           { path: "scholarships", element: <ScholarshipsPage /> },
+          { path: "chat", element: <ChatPage /> },
         ],
       },
       { path: "forbidden", element: <ForbiddenPage /> },

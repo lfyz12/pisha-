@@ -1,4 +1,5 @@
 export type { ApiResponse, PaginatedResponse, ApiError, PaginationParams } from "./api";
+export type { ScholarshipOffer } from "./scholarship";
 export type {
   Student,
   DashboardMetrics,
@@ -13,5 +14,6 @@ export type {
   Scholarship,
   ChatMessage,
   ScholarshipFilter,
+  Notification,
   UserAccount,
 } from "./domain";

@@ -124,3 +124,6 @@ export {
   type ToastActionElement,
 } from "./toast";
 export { Alert, AlertTitle, AlertDescription } from "./alert";
+export { NotificationBell } from "./notification-bell";
+export { NotificationDropdown } from "./notification-dropdown";
+export { NotificationItem } from "./notification-item";

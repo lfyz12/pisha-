@@ -35,19 +35,28 @@ function toStudent(raw: ExcelStudentRaw, idx: number): Student {
   return {
     id: `mock-${idx}`,
     name: raw.fullName,
-    initials: parts.map((p) => p[0] ?? "").join("").slice(0, 2).toUpperCase(),
-    studentId: raw.groupName ? `${raw.groupName}-${String(idx + 1).padStart(3, "0")}` : `STU-${String(idx + 1).padStart(4, "0")}`,
+    initials: parts
+      .map((p) => p[0] ?? "")
+      .join("")
+      .slice(0, 2)
+      .toUpperCase(),
+    studentId: raw.groupName
+      ? `${raw.groupName}-${String(idx + 1).padStart(3, "0")}`
+      : `STU-${String(idx + 1).padStart(4, "0")}`,
     course: detectCourse(raw.groupName),
     rating: raw.averageScore,
   };
 }
 
 function calcActivityScore(s: ExcelStudentRaw): number {
-  return Math.round((
-    Object.values(s.scienceActivity).reduce((a, b) => a + b, 0) +
-    Object.values(s.projectActivity).reduce((a, b) => a + b, 0) +
-    Object.values(s.extracurricular).reduce((a, b) => a + b, 0)
-  ) * 10) / 10;
+  return (
+    Math.round(
+      (Object.values(s.scienceActivity).reduce((a, b) => a + b, 0) +
+        Object.values(s.projectActivity).reduce((a, b) => a + b, 0) +
+        Object.values(s.extracurricular).reduce((a, b) => a + b, 0)) *
+        10
+    ) / 10
+  );
 }
 
 function matchUser(fullName: string): boolean {
@@ -110,11 +119,18 @@ export const useMockDataStore = create<MockDataState>((set, get) => ({
   getRatingStats: () => {
     const students = get().getRatingStudents();
     if (students.length === 0) {
-      return { myPlace: 0, myPlaceChange: 0, topScore: 0, averageScore: 0, activityLevel: "Низкая" };
+      return {
+        myPlace: 0,
+        myPlaceChange: 0,
+        topScore: 0,
+        averageScore: 0,
+        activityLevel: "Низкая",
+      };
     }
 
     const currentUser = students.find((s) => s.isCurrentUser);
-    const avgScore = Math.round((students.reduce((acc, s) => acc + s.totalScore, 0) / students.length) * 10) / 10;
+    const avgScore =
+      Math.round((students.reduce((acc, s) => acc + s.totalScore, 0) / students.length) * 10) / 10;
 
     let activityLevel: "Высокая" | "Средняя" | "Низкая" = "Средняя";
     if (currentUser && students.length > 0) {
@@ -135,9 +151,10 @@ export const useMockDataStore = create<MockDataState>((set, get) => ({
   getMetrics: () => {
     const { parsedData } = get();
     const students = get().getStudents();
-    const avgScore = students.length > 0
-      ? Math.round((students.reduce((acc, s) => acc + s.rating, 0) / students.length) * 100) / 100
-      : 0;
+    const avgScore =
+      students.length > 0
+        ? Math.round((students.reduce((acc, s) => acc + s.rating, 0) / students.length) * 100) / 100
+        : 0;
 
     let attendanceAvg = 85;
     if (parsedData && parsedData.students.length > 0) {
@@ -151,7 +168,7 @@ export const useMockDataStore = create<MockDataState>((set, get) => ({
       }
       if (count > 0) {
         const avg = total / count;
-        attendanceAvg = Math.round(avg <= 1 ? avg * 100 : avg);
+        attendanceAvg = Math.min(100, Math.round(avg <= 1 ? avg * 100 : avg));
       }
     }
 
@@ -227,7 +244,7 @@ export const useMockDataStore = create<MockDataState>((set, get) => ({
       }
       trends.push({
         month: `Нед ${w + 1}`,
-        value: count > 0 ? Math.round((sum / count) * 100) : 0,
+        value: count > 0 ? Math.min(100, Math.round((sum / count) * 100)) : 0,
       });
     }
 

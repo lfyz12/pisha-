@@ -25,7 +25,7 @@ export default function DashboardLayout() {
       <Sidebar />
       <main className="flex-1 flex flex-col min-w-0">
         <Header />
-        <div className="p-6 space-y-6 max-w-[var(--spacing-container-max)] mx-auto w-full">
+        <div className="flex-1 p-6 space-y-6 max-w-[var(--spacing-container-max)] mx-auto w-full">
           <Outlet />
         </div>
         <Footer />
