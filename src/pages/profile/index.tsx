@@ -95,7 +95,7 @@ export default function ProfilePage() {
                 Баллы: {formatNumber(currentStudent?.totalScore)}
               </span>
               <span className="text-[10px] bg-surface-container-low px-2 py-1 rounded font-semibold text-secondary border border-border-subtle">
-                Баллы: {formatNumber(metrics?.averageGpa)}
+                Средний балл: {formatNumber(metrics?.averageGpa)}
               </span>
               <span className="text-[10px] bg-surface-container-low px-2 py-1 rounded font-semibold text-secondary border border-border-subtle">
                 Посещаемость: {metrics?.attendance ?? "—"}%

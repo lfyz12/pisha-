@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Icon } from "@/components/ui/icon";
+import { StudentSelect } from "@/components/student-select";
 import { useAuthStore, useMockDataStore } from "@/stores";
 import { cn, formatNumber } from "@/lib/utils";
 import type { RatingStudent } from "@/types";
@@ -59,21 +60,18 @@ export default function OverviewPage() {
           <div className="flex items-center gap-3">
             <label className="text-sm font-semibold text-text-main">Просмотр студента:</label>
             {hasData && students.length > 0 ? (
-              <select
-                value={targetStudent?.id ?? ""}
-                onChange={(e) => {
-                  const s = students.find((st) => st.id === e.target.value);
-                  setViewingStudent(s ?? null);
-                }}
-                className="bg-surface-card border border-border-subtle rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary min-w-[200px]"
-              >
-                <option value="">Сводка по всем</option>
-                {students.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} ({s.group})
-                  </option>
-                ))}
-              </select>
+              <div className="w-full sm:w-64">
+                <StudentSelect
+                  students={students}
+                  value={targetStudent?.id ?? null}
+                  onChange={(id) => {
+                    const s = id ? students.find((st) => st.id === id) : null;
+                    setViewingStudent(s ?? null);
+                  }}
+                  placeholder="Сводка по всем"
+                  showClear={false}
+                />
+              </div>
             ) : (
               <span className="text-sm text-secondary">Загрузите Excel для выбора студента</span>
             )}
@@ -228,9 +226,9 @@ export default function OverviewPage() {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="lg:col-span-2 bg-surface-card rounded-xl overflow-hidden flex flex-col">
-          <div className="p-5 border-b border-border-subtle flex justify-between items-center bg-surface-container-low">
+          <div className="p-4 sm:p-5 border-b border-border-subtle flex justify-between items-center bg-surface-container-low">
             <h3 className="text-sm font-headline font-bold">Лидерборд Студентов</h3>
             <button
               onClick={() => navigate("/dashboard/rating")}
@@ -239,7 +237,7 @@ export default function OverviewPage() {
               Показать весь рейтинг
             </button>
           </div>
-          <div className="overflow-x-auto">
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-left table-fixed">
               <colgroup>
                 <col className="w-[60px]" />
@@ -349,6 +347,82 @@ export default function OverviewPage() {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="sm:hidden divide-y divide-border-subtle">
+            {hasData ? (
+              <>
+                {top3.map((s) => (
+                  <div
+                    key={s.id}
+                    onClick={() => isAdmin && setViewingStudent(s)}
+                    className={cn(
+                      "p-4 hover:bg-surface-container-low transition-colors",
+                      viewingStudent?.id === s.id && "bg-primary-fixed/20",
+                      isAdmin && "cursor-pointer"
+                    )}
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <span
+                        className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
+                          s.rank <= 3 ? "bg-primary text-on-primary" : "bg-secondary-fixed"
+                        )}
+                      >
+                        {s.rank}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium truncate">{s.name}</div>
+                        <div className="text-xs text-secondary">{s.group}</div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-sm font-bold text-primary">
+                          {formatNumber(s.totalScore)}
+                        </div>
+                        <div className="flex justify-end">
+                          {s.trend === "up" && (
+                            <Icon name="expand_less" className="text-status-success text-sm" />
+                          )}
+                          {s.trend === "down" && (
+                            <Icon name="expand_more" className="text-status-error text-sm" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {me && !top3.find((s) => s.isCurrentUser) && (
+                  <div
+                    onClick={() => isAdmin && setViewingStudent(me)}
+                    className={cn(
+                      "p-4 border-l-4 border-primary hover:bg-surface-container-low transition-colors",
+                      isAdmin && "cursor-pointer"
+                    )}
+                    style={{ backgroundColor: "var(--color-primary-fixed)" }}
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs font-bold shrink-0">
+                        {me.rank}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-bold text-primary truncate">
+                          {me.name} (Вы)
+                        </div>
+                        <div className="text-xs text-primary">{me.group}</div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-sm font-bold text-primary">
+                          {formatNumber(me.totalScore)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="px-5 py-8 text-center text-secondary text-sm">
+                {students.length === 0 ? "Загрузите данные из Excel" : "Нет данных"}
+              </div>
+            )}
           </div>
           <div className="p-4 text-center">
             <button

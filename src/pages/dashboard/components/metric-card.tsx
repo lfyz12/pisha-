@@ -47,7 +47,7 @@ export function MetricCard({
   }
 
   return (
-    <div className="bg-surface-card p-lg rounded-lg border border-border-subtle hover-lift flex flex-col justify-between min-h-[140px] overflow-hidden">
+    <div className="bg-surface-card p-lg rounded-lg border border-border-subtle hover:-translate-y-0.5 hover:shadow-md flex flex-col justify-between min-h-[140px] overflow-hidden transition-all duration-200">
       <span className="text-[--text-label-md] font-label-md text-secondary uppercase block leading-tight">
         {label}
       </span>

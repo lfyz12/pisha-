@@ -6,25 +6,16 @@ export function Footer() {
           <p className="text-xs font-medium text-text-main">
             &copy; 2024 Уральский федеральный университет
           </p>
-          <p className="text-[11px] text-muted-foreground">Уральская передовая инженерная школа</p>
+          <p className="text-[11px] text-secondary">Уральская передовая инженерная школа</p>
         </div>
         <div className="flex items-center gap-6">
-          <a
-            href="#"
-            className="text-xs text-muted-foreground hover:text-primary transition-colors"
-          >
+          <a href="#" className="text-xs text-secondary hover:text-primary transition-colors">
             Поддержка
           </a>
-          <a
-            href="#"
-            className="text-xs text-muted-foreground hover:text-primary transition-colors"
-          >
+          <a href="#" className="text-xs text-secondary hover:text-primary transition-colors">
             Документация
           </a>
-          <a
-            href="#"
-            className="text-xs text-muted-foreground hover:text-primary transition-colors"
-          >
+          <a href="#" className="text-xs text-secondary hover:text-primary transition-colors">
             Политика конфиденциальности
           </a>
         </div>

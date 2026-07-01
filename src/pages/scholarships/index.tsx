@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Progress } from "@/components/ui/progress";
+import { StudentSelect } from "@/components/student-select";
 import { useScholarshipStore, useAuthStore, useMockDataStore } from "@/stores";
-import { formatNumber } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { formatNumber, cn } from "@/lib/utils";
 import type { ScholarshipOffer } from "@/types";
 
 const typeIcons: Record<ScholarshipOffer["type"], string> = {
@@ -35,7 +35,17 @@ export default function ScholarshipsPage() {
   const mockStore = useMockDataStore();
   const students = mockStore.parsedData ? mockStore.getRatingStudents() : [];
   const currentStudent = students.find((s) => s.isCurrentUser);
-  const studentScore = currentStudent?.totalScore ?? 0;
+  const isAdmin = currentUser?.role === "admin";
+
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+
+  const targetStudent = isAdmin
+    ? selectedStudentId
+      ? students.find((s) => s.id === selectedStudentId)
+      : null
+    : currentStudent;
+
+  const studentScore = targetStudent?.totalScore ?? 0;
 
   useEffect(() => {
     fetch();
@@ -44,16 +54,35 @@ export default function ScholarshipsPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-headline font-bold text-text-main">Мои стипендии</h1>
+        <h1 className="text-2xl font-headline font-bold text-text-main">
+          {isAdmin ? "Стипендии студентов" : "Мои стипендии"}
+        </h1>
         <p className="text-sm text-secondary mt-1">
-          Проверьте доступные стипендии на основе вашего рейтинга
+          {isAdmin
+            ? "Проверьте доступные стипендии для выбранного студента"
+            : "Проверьте доступные стипендии на основе вашего рейтинга"}
         </p>
       </div>
 
-      {currentUser?.role === "admin" ? (
-        <div className="bg-surface-card rounded-xl border border-border-subtle p-8 text-center">
-          <Icon name="admin_panel_settings" className="text-4xl text-secondary/40 mb-3" />
-          <p className="text-secondary text-sm">Раздел стипендий доступен только студентам</p>
+      {isAdmin && (
+        <div className="bg-surface-card rounded-xl border border-border-subtle p-4 sm:p-6">
+          <label className="text-xs font-semibold text-secondary uppercase tracking-wider block mb-3">
+            Выберите студента
+          </label>
+          <StudentSelect
+            students={students}
+            value={selectedStudentId}
+            onChange={setSelectedStudentId}
+            placeholder="Выберите студента для просмотра стипендий"
+          />
+        </div>
+      )}
+
+      {isAdmin && !selectedStudentId ? (
+        <div className="text-center py-12 text-secondary text-sm">
+          {students.length > 0
+            ? "Выберите студента, чтобы увидеть доступные ему стипендии"
+            : "Загрузите данные на странице рейтинга"}
         </div>
       ) : loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -3,7 +3,7 @@ import { Icon } from "@/components/ui/icon";
 import { NotificationItem } from "./notification-item";
 import { useNotificationStore } from "@/stores";
 
-export function NotificationDropdown({ onClose: _onClose }: { onClose: () => void }) {
+export function NotificationDropdown({ onClose: _onClose }: { onClose?: () => void } = {}) {
   const notifications = useNotificationStore((s) => s.notifications);
   const loading = useNotificationStore((s) => s.loading);
   const fetch = useNotificationStore((s) => s.fetch);

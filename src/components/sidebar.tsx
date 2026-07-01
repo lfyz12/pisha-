@@ -4,7 +4,13 @@ import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 import { useThemeStore, useAuthStore } from "@/stores";
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  isMobile?: boolean;
+}
+
+export function Sidebar({ isOpen, onClose, isMobile }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, setTheme } = useThemeStore();
@@ -29,10 +35,7 @@ export function Sidebar() {
     { icon: "smart_toy", label: "ИИ-Помощник", path: "/dashboard/chat" },
   ];
 
-  const isActive = (path: string) => {
-    if (path === "#") return false;
-    return location.pathname === path;
-  };
+  const isActive = (path: string) => location.pathname === path;
 
   const cycleTheme = () => {
     const themes: Array<"light" | "dark" | "system"> = ["light", "dark", "system"];
@@ -40,9 +43,16 @@ export function Sidebar() {
     setTheme(themes[(currentIndex + 1) % themes.length]);
   };
 
-  return (
-    <aside className="h-screen w-64 flex-col flex sticky top-0 left-0 border-r border-border-subtle bg-surface-card z-50">
-      <div className="flex items-center px-5 h-20 border-b border-border-subtle">
+  const handleNav = (path: string) => {
+    if (path !== "#") {
+      navigate(path);
+      onClose?.();
+    }
+  };
+
+  const content = (
+    <>
+      <div className="flex items-center px-5 h-20 border-b border-border-subtle shrink-0">
         <div className="w-36 shrink-0 flex items-center justify-center">
           <img
             src={isDark ? "/logo.png" : "/logodark.png"}
@@ -58,7 +68,7 @@ export function Sidebar() {
           return (
             <button
               key={item.label}
-              onClick={() => item.path !== "#" && navigate(item.path)}
+              onClick={() => handleNav(item.path)}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 text-left",
                 active
@@ -73,7 +83,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="px-3 py-3 border-t border-border-subtle space-y-0.5">
+      <div className="px-3 py-3 border-t border-border-subtle space-y-0.5 shrink-0">
         <button
           onClick={cycleTheme}
           className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-primary font-semibold bg-surface-container-low rounded-lg hover:bg-primary-fixed transition-colors"
@@ -90,13 +100,40 @@ export function Sidebar() {
           </div>
         </button>
         <button
-          onClick={() => navigate("/dashboard/profile")}
+          onClick={() => handleNav("/dashboard/profile")}
           className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-secondary hover:text-text-main hover:bg-surface-container-low rounded-lg transition-all text-left"
         >
           <Icon name="account_circle" className="text-[20px]" />
           <span>Профиль</span>
         </button>
       </div>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        {isOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 z-50 transition-opacity duration-200"
+            onClick={onClose}
+          />
+        )}
+        <aside
+          className={cn(
+            "fixed top-0 left-0 h-full w-64 bg-surface-card z-50 shadow-2xl transition-transform duration-300 ease-out",
+            isOpen ? "translate-x-0" : "-translate-x-full"
+          )}
+        >
+          <div className="flex flex-col h-full">{content}</div>
+        </aside>
+      </>
+    );
+  }
+
+  return (
+    <aside className="hidden lg:flex h-screen w-64 flex-col sticky top-0 left-0 border-r border-border-subtle bg-surface-card z-40">
+      <div className="flex flex-col h-full">{content}</div>
     </aside>
   );
 }
