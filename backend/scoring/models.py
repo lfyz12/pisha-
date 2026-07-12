@@ -24,7 +24,9 @@ class ScoringParticipant(models.Model):
     )
 
     class Meta:
-        unique_together = ["log", "student"]
+        constraints = [
+            models.UniqueConstraint(fields=["log", "student"], name="unique_scoring_participant")
+        ]
 
     def __str__(self):
         return f"{self.student} in {self.log}"

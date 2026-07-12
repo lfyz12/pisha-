@@ -41,7 +41,9 @@ class Attendance(models.Model):
     value = models.FloatField()
 
     class Meta:
-        unique_together = ["student", "week_index"]
+        constraints = [
+            models.UniqueConstraint(fields=["student", "week_index"], name="unique_attendance_per_week")
+        ]
 
 
 class Activity(models.Model):
