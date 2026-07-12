@@ -17,8 +17,8 @@ export const useScholarshipStore = create<ScholarshipState>((set) => ({
   fetch: async () => {
     set({ loading: true, error: null });
     try {
-      const offers = await fetchScholarshipOffers();
-      set({ offers, loading: false });
+      const response = await fetchScholarshipOffers();
+      set({ offers: response.data, loading: false });
     } catch {
       set({ error: "Ошибка загрузки стипендий", loading: false });
     }
