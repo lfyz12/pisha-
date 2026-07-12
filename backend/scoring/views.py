@@ -1,3 +1,4 @@
+from django.db import models, transaction
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
@@ -19,6 +20,7 @@ def scoring_logs_view(request):
 
 @api_view(["POST"])
 @permission_classes([IsAdminUser])
+@transaction.atomic
 def create_scoring_view(request):
     activity_type = request.data.get("activity_type") or request.data.get(
         "activityType", ""
@@ -39,8 +41,9 @@ def create_scoring_view(request):
         try:
             student = Student.objects.get(pk=sid)
             ScoringParticipant.objects.create(log=log, student=student)
-            student.total_score += points
-            student.save(update_fields=["total_score"])
+            Student.objects.filter(pk=sid).update(
+                total_score=models.F("total_score") + points
+            )
         except Student.DoesNotExist:
             pass
 
