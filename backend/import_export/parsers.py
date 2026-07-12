@@ -73,7 +73,7 @@ def _is_meta_row(row: list[str], idx: int) -> bool:
     all_empty = all(not c for c in first4)
     if not all_empty:
         return False
-    rest_text = [c for c in row[4:] if c]
+    rest_text = [c.lower() for c in row[4:] if c]
     has_meta = any(
         "количеств" in t or "учебн" in t or "семестр" in t for t in rest_text
     )
@@ -83,7 +83,7 @@ def _is_meta_row(row: list[str], idx: int) -> bool:
 def _is_header_row(row: list[str]) -> bool:
     first4 = row[:4]
     return any(
-        any(kw in c for kw in HEADER_KEYWORDS) for c in first4 if c
+        any(kw in c.lower() for kw in HEADER_KEYWORDS) for c in first4 if c
     )
 
 
@@ -91,7 +91,7 @@ def parse_rating_excel_buffer(buffer: bytes) -> ParsedExcelData:
     workbook = openpyxl.load_workbook(filename=io.BytesIO(buffer), data_only=True)
     main_sheet = workbook.worksheets[0]
     raw_rows = [
-        [_to_string(cell.value).lower() for cell in row]
+        [_to_string(cell.value) for cell in row]
         for row in main_sheet.iter_rows()
     ]
     events = _parse_events_sheet(workbook)
@@ -154,8 +154,8 @@ def _parse_main_sheet(raw_rows: list[list[str]]) -> list[ExcelStudentRaw]:
         first_cell = row[0]
         is_still_header = (
             first_cell == ""
-            or any(kw in first_cell for kw in HEADER_KEYWORDS)
-            or len(header_rows) < 3
+            or any(kw in first_cell.lower() for kw in HEADER_KEYWORDS)
+            or len(header_rows) < 2
         )
         if is_still_header:
             header_rows.append(row)
@@ -176,7 +176,7 @@ def _parse_main_sheet(raw_rows: list[list[str]]) -> list[ExcelStudentRaw]:
     categories: list[dict[str, Any] | None] = []
 
     for col in range(max_cols):
-        top_label = _to_string(filled_headers[0][col])
+        top_label = _to_string(filled_headers[0][col]).lower()
         sub_labels = [
             _to_string(filled_headers[h][col])
             for h in range(1, num_header_rows)
