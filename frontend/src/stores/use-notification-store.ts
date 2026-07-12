@@ -17,8 +17,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   fetch: async () => {
     set({ loading: true });
-    const notifications = await notificationService.fetchNotifications();
-    set({ notifications, loading: false });
+    const response = await notificationService.fetchNotifications();
+    set({ notifications: response.data, loading: false });
   },
 
   markAsRead: async (id) => {
