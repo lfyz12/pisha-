@@ -13,10 +13,18 @@ class ScoringLog(models.Model):
     class Meta:
         ordering = ["-created_at"]
 
+    def __str__(self):
+        return f"{self.activity_type} ({self.points} pts)"
+
 
 class ScoringParticipant(models.Model):
     log = models.ForeignKey(ScoringLog, on_delete=models.CASCADE, related_name="participants")
-    student = models.ForeignKey("students.Student", on_delete=models.CASCADE)
+    student = models.ForeignKey(
+        "students.Student", on_delete=models.CASCADE, related_name="scoring_participants"
+    )
 
     class Meta:
         unique_together = ["log", "student"]
+
+    def __str__(self):
+        return f"{self.student} in {self.log}"

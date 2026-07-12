@@ -12,3 +12,6 @@ class AIRule(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"AI Rule {self.id}"
