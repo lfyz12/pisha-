@@ -3,7 +3,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Icon } from "@/components/ui/icon";
 import { AdminOnly } from "@/components/admin-only";
 import { useScoringLogs, useCreateScoring, useStudents } from "@/hooks";
-import { useMockDataStore } from "@/stores";
 import type { ScoringLog, Student } from "@/types";
 
 function formatTimeAgo(dateStr: string) {
@@ -23,14 +22,14 @@ export function ScoringFormSection() {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 
   const { data: logsData, isLoading: logsLoading } = useScoringLogs();
-  const { data: studentsData, isLoading: studentsLoading } = useStudents({ page: 1, pageSize: 100 });
+  const { data: studentsData, isLoading: studentsLoading } = useStudents({
+    page: 1,
+    pageSize: 100,
+  });
   const createScoring = useCreateScoring();
 
-  const mockStore = useMockDataStore();
-  const mockStudents: Student[] = mockStore.parsedData ? mockStore.getStudents() : [];
-
   const logs: ScoringLog[] = logsData?.data ?? [];
-  const students: Student[] = mockStudents.length > 0 ? mockStudents : (studentsData?.data ?? []);
+  const students: Student[] = studentsData?.data ?? [];
 
   const toggleStudent = (id: string) => {
     setSelectedStudents((prev) =>
@@ -99,7 +98,7 @@ export function ScoringFormSection() {
               Выбор студентов
             </label>
             <div className="border border-border-subtle rounded-lg p-2 space-y-1 max-h-40 overflow-y-auto bg-surface-container-low">
-              {studentsLoading && mockStudents.length === 0 ? (
+              {studentsLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="flex items-center gap-2 px-2 py-1.5">
                     <Skeleton className="w-4 h-4 rounded" />
@@ -110,7 +109,10 @@ export function ScoringFormSection() {
                 <span className="text-sm text-secondary px-2 py-1.5 block">Нет студентов</span>
               ) : (
                 students.map((student) => (
-                  <label key={student.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-container-lowest cursor-pointer text-sm transition-colors">
+                  <label
+                    key={student.id}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-container-lowest cursor-pointer text-sm transition-colors"
+                  >
                     <input
                       className="rounded text-primary focus:ring-primary accent-primary"
                       type="checkbox"
@@ -120,11 +122,6 @@ export function ScoringFormSection() {
                     <span>{student.name}</span>
                   </label>
                 ))
-              )}
-              {mockStudents.length > 0 && (
-                <div className="border-t border-border-subtle pt-1 mt-1 px-2">
-                  <span className="text-[10px] text-secondary">Загружено из Excel: {mockStudents.length} студентов</span>
-                </div>
               )}
             </div>
           </div>
