@@ -1,4 +1,10 @@
-export { getStudents, getStudent, updateStudentRating } from "./students";
+export {
+  getStudents,
+  getStudent,
+  getStudentProfile,
+  updateStudentRating,
+  updateStudentStatus,
+} from "./students";
 export { getDashboardMetrics, getGpaDistribution, getAttendanceTrends } from "./dashboard";
 export { getScoringLogs, createScoring } from "./scoring";
 export { getAIRules, createAIRule } from "./ai-rules";
@@ -8,3 +14,4 @@ export { getScholarships } from "./scholarships";
 export { sendChatMessage, checkHealth, createChatMessage } from "./chat";
 export { fetchNotifications, markAsRead, markAllAsRead } from "./notification";
 export { fetchScholarshipOffers } from "./scholarship-service";
+export { uploadExcel } from "./import";
