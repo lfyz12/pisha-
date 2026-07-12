@@ -8,6 +8,10 @@ from .models import AIRule
 from .serializers import AIRuleSerializer
 
 
+def _is_admin(user):
+    return getattr(user, "role", None) == "admin" or getattr(user, "is_staff", False)
+
+
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def ai_rule_list_create_view(request):
@@ -15,6 +19,12 @@ def ai_rule_list_create_view(request):
         rules = AIRule.objects.all()
         serializer = AIRuleSerializer(rules, many=True)
         return Response({"data": serializer.data, "status": 200})
+
+    if not _is_admin(request.user):
+        return Response(
+            {"data": None, "status": status.HTTP_403_FORBIDDEN},
+            status=status.HTTP_403_FORBIDDEN,
+        )
 
     serializer = AIRuleSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -29,6 +39,12 @@ def ai_rule_detail_view(request, pk):
 
     if request.method == "GET":
         return Response({"data": AIRuleSerializer(rule).data, "status": 200})
+
+    if not _is_admin(request.user):
+        return Response(
+            {"data": None, "status": status.HTTP_403_FORBIDDEN},
+            status=status.HTTP_403_FORBIDDEN,
+        )
 
     if request.method == "DELETE":
         rule.delete()
