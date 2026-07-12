@@ -40,6 +40,9 @@ def persist_imported_data(students: list[ExcelStudentRaw], events: list[ExcelEve
         if Student.objects.filter(student_id=readable_id).exists():
             continue
 
+        if User.objects.filter(username=readable_id).exists():
+            continue
+
         student_id = uuid.uuid4()
         student = Student.objects.create(
             id=student_id,
