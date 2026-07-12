@@ -7,6 +7,7 @@ export {
   useAttendanceTrends,
   useStudents,
   useUpdateStudentRating,
+  useUpdateStudentStatus,
   useScoringLogs,
   useCreateScoring,
   useAIRules,
@@ -14,4 +15,7 @@ export {
   useServerMetrics,
   useRatingTable,
   useScholarships,
+  useUploadExcel,
+  useStudentProfile,
+  useRatingData,
 } from "./server";

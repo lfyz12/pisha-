@@ -1,7 +1,10 @@
 export { useDashboardMetrics, useGpaDistribution, useAttendanceTrends } from "./use-dashboard";
-export { useStudents, useUpdateStudentRating } from "./use-students";
+export { useStudents, useUpdateStudentRating, useUpdateStudentStatus } from "./use-students";
 export { useScoringLogs, useCreateScoring } from "./use-scoring";
 export { useAIRules, useCreateAIRule } from "./use-ai-rules";
 export { useServerMetrics } from "./use-server";
 export { useRatingTable } from "./use-rating";
 export { useScholarships } from "./use-scholarships";
+export { useUploadExcel } from "./use-import";
+export { useStudentProfile } from "./use-student-profile";
+export { useRatingData } from "./use-rating-data";
