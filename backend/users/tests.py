@@ -44,10 +44,10 @@ class MfaSecurityTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-
 from django.db import IntegrityError
 
 from users.mfa import create_recovery_codes
+from users.models import RecoveryCode
 
 
 class RecoveryCodeTests(TestCase):
@@ -60,26 +60,12 @@ class RecoveryCodeTests(TestCase):
         self.assertEqual(len(codes[0]), 16)
 
     def test_same_code_hash_for_different_users_is_allowed(self):
-        fixed_code = "A" * 16
-        import secrets as _secrets
-        original = _secrets.token_hex
-        _secrets.token_hex = lambda _n: fixed_code
-        try:
-            create_recovery_codes(self.user_a, count=1)
-            create_recovery_codes(self.user_b, count=1)
-        finally:
-            _secrets.token_hex = original
+        RecoveryCode.objects.create(user=self.user_a, code_hash="shared-hash")
+        RecoveryCode.objects.create(user=self.user_b, code_hash="shared-hash")
         self.assertEqual(self.user_a.recovery_codes.count(), 1)
         self.assertEqual(self.user_b.recovery_codes.count(), 1)
 
-    def test_duplicate_code_for_same_user_is_rejected(self):
-        fixed_code = "B" * 16
-        import secrets as _secrets
-        original = _secrets.token_hex
-        _secrets.token_hex = lambda _n: fixed_code
-        try:
-            create_recovery_codes(self.user_a, count=1)
-            with self.assertRaises(IntegrityError):
-                create_recovery_codes(self.user_a, count=1)
-        finally:
-            _secrets.token_hex = original
+    def test_duplicate_code_hash_for_same_user_is_rejected(self):
+        RecoveryCode.objects.create(user=self.user_a, code_hash="duplicate-hash")
+        with self.assertRaises(IntegrityError):
+            RecoveryCode.objects.create(user=self.user_a, code_hash="duplicate-hash")
