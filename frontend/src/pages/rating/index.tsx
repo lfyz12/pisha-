@@ -2,10 +2,7 @@ import { useState, useRef, useMemo } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminOnly } from "@/components/admin-only";
-import { useRatingTable } from "@/hooks";
-import { useMockDataStore } from "@/stores";
-import { parseRatingExcel } from "@/lib/parse-rating-excel";
-import { importExcelFromFile } from "@/lib/import-excel";
+import { useRatingTable, useUploadExcel } from "@/hooks";
 import type { RatingStudent, RatingStats } from "@/types";
 import { cn, formatNumber } from "@/lib/utils";
 
@@ -18,23 +15,15 @@ export default function RatingPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(30);
   const [importError, setImportError] = useState("");
-  const [parsingType, setParsingType] = useState<"simple" | "multi">("multi");
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const mockStore = useMockDataStore();
 
   const courseParam = activeCourse === "Все" ? undefined : parseInt(activeCourse);
   const { data, isLoading, error } = useRatingTable(courseParam);
+  const uploadExcel = useUploadExcel();
 
-  const apiStudents: RatingStudent[] = data?.data?.students ?? [];
-  const apiStats = data?.data?.stats;
-
-  const mockStudents = mockStore.parsedData ? mockStore.getRatingStudents(courseParam) : [];
-  const mockStats = mockStore.parsedData ? mockStore.getRatingStats() : undefined;
-
-  const hasMockData = mockStore.parsedData !== null;
-  const students = hasMockData ? mockStudents : apiStudents;
-  const stats = hasMockData ? mockStats : apiStats;
+  const rawStudents = data?.data?.students;
+  const students: RatingStudent[] = useMemo(() => rawStudents ?? [], [rawStudents]);
+  const stats: RatingStats | undefined = data?.data?.stats;
 
   const filtered = useMemo(() => {
     if (!searchTerm) return students;
@@ -51,43 +40,22 @@ export default function RatingPage() {
   const safePage = page > totalPages ? 1 : page;
   const paginated = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setImportError("");
-    try {
-      if (parsingType === "multi") {
-        const data = await parseRatingExcel(file);
-        mockStore.setExcelData(data, file.name);
-      } else {
-        const result = await importExcelFromFile(file);
-        if ("students" in result && "stats" in result) {
-          const simpleResult = result as { students: RatingStudent[]; stats: RatingStats };
-          const convertedData = {
-            students: simpleResult.students.map((s) => ({
-              groupName: s.group,
-              fullName: s.name,
-              totalScore: s.totalScore,
-              averageScore: s.academicScore,
-              attendance: [] as number[],
-              scienceActivity: {} as Record<string, number>,
-              projectActivity: {} as Record<string, number>,
-              extracurricular: {} as Record<string, number>,
-            })),
-            events: [],
-          };
-          mockStore.setExcelData(convertedData, file.name);
-        }
+    uploadExcel.mutate(
+      { file },
+      {
+        onError: (err) => {
+          setImportError(err instanceof Error ? err.message : "Неизвестная ошибка импорта");
+        },
       }
-    } catch (err) {
-      setImportError(err instanceof Error ? err.message : "Неизвестная ошибка");
-    }
+    );
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleClearImport = () => {
-    mockStore.clear();
-  };
+  const importSummary = uploadExcel.data?.data;
 
   const getPageNumbers = () => {
     const pages: (number | "...")[] = [];
@@ -155,23 +123,14 @@ export default function RatingPage() {
                 onChange={handleFileUpload}
                 className="hidden"
               />
-              {mockStore.parsedData ? (
-                <button
-                  onClick={handleClearImport}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-label border border-status-error text-status-error hover:bg-status-error/10 transition-colors"
-                >
-                  <Icon name="close" />
-                  Сбросить
-                </button>
-              ) : (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-label border border-border-subtle text-secondary hover:text-primary hover:border-primary transition-colors"
-                >
-                  <Icon name="upload_file" />
-                  Excel
-                </button>
-              )}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadExcel.isPending}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-label border border-border-subtle text-secondary hover:text-primary hover:border-primary transition-colors disabled:opacity-50"
+              >
+                <Icon name={uploadExcel.isPending ? "hourglass_empty" : "upload_file"} />
+                {uploadExcel.isPending ? "Импорт..." : "Excel"}
+              </button>
             </AdminOnly>
           </div>
         </div>
@@ -183,19 +142,14 @@ export default function RatingPage() {
             <Icon name="error" />
             <span>{importError}</span>
           </div>
-          <button
-            onClick={() => setParsingType(parsingType === "multi" ? "simple" : "multi")}
-            className="mt-1 text-xs underline hover:no-underline"
-          >
-            Попробовать {parsingType === "multi" ? "простой" : "сложный"} парсер
-          </button>
         </div>
       )}
 
-      {mockStore.parsedData && (
+      {importSummary && (
         <div className="bg-primary-fixed/20 border border-primary/30 text-primary text-sm px-4 py-2 rounded-lg flex items-center gap-2">
           <Icon name="check_circle" fill />
-          Загружено {mockStore.parsedData.students.length} студентов из Excel ({mockStore.fileName})
+          Импортировано {importSummary.studentsImported} студентов
+          {importSummary.eventsImported > 0 && ` и ${importSummary.eventsImported} мероприятий`}
         </div>
       )}
 
@@ -309,7 +263,7 @@ export default function RatingPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
-              {!hasMockData && isLoading ? (
+              {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
                     {Array.from({ length: 8 }).map((_, j) => (
