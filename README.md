@@ -1,6 +1,35 @@
 # Pisha
 
-Production-ready React application skeleton built with modern tooling and scalable architecture.
+Система рейтинга студентов с React frontend, Django REST API и PostgreSQL.
+
+## Security setup
+
+Production запуск требует явных секретов. Для Docker Compose скопируйте `./.env.example` в `./.env`; для локальной разработки backend — `backend/.env.example` в `backend/.env`. Задайте сильные значения и сгенерируйте ключ шифрования:
+
+```bash
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+Никогда не используйте значения из `.env.example` как реальные секреты. PostgreSQL не публикуется на хост, а backend доступен через nginx по `/api`.
+
+Администратор при первом входе подключает TOTP в Google Authenticator или совместимом приложении. Новые студенты получают уникальный временный пароль, который необходимо сменить при первом входе.
+
+### Учётные данные администратора по умолчанию
+
+После запуска и сидирования базы данных создаётся администратор:
+
+- **Логин:** `admin`
+- **Пароль:** значение переменной окружения `DEFAULT_ADMIN_PASSWORD`. Перед первым запуском задайте его в `.env` (для Docker — `./.env.example`, для локального backend — `backend/.env.example`); никогда не используйте значение из `.env.example` в production.
+
+При первом входе администратору будет предложено настроить MFA (TOTP).
+
+## Run with Docker
+
+```bash
+docker compose up --build
+```
+
+Frontend будет доступен на `http://localhost`. Для локальной frontend-разработки используйте `cd frontend && npm run dev`; backend и PostgreSQL должны быть запущены отдельно.
 
 ## Tech Stack
 
