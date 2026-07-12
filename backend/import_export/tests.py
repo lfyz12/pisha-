@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from import_export.parsers import (
     ExcelStudentRaw,
+    has_multi_level_header,
     parse_flat_excel_buffer,
     parse_rating_excel_buffer,
 )
@@ -47,3 +48,15 @@ class ParserSmokeTests(TestCase):
         student = parsed.students[0]
         self.assertEqual(student.full_name, "Иван Петров")
         self.assertEqual(student.total_score, 100)
+
+    def test_has_multi_level_header_detects_keyword(self):
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet.append(["Категория", "Группа", "ФИО"])
+        buffer = io.BytesIO()
+        workbook.save(buffer)
+        buffer.seek(0)
+
+        result = has_multi_level_header(buffer.getvalue())
+
+        self.assertTrue(result)
