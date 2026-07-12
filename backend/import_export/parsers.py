@@ -1,4 +1,5 @@
 import io
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -251,10 +252,8 @@ def _parse_main_sheet(raw_rows: list[list[str]]) -> list[ExcelStudentRaw]:
                 extracurr_map[sub_key] = _to_number(cell_val)
 
         def sort_key(k: str):
-            try:
-                return (0, int(k))
-            except ValueError:
-                return (1, k)
+            match = re.search(r"(\d+)", k)
+            return (0, int(match.group(1))) if match else (1, k)
 
         student.attendance = [attendance_map[k] for k in sorted(attendance_map.keys(), key=sort_key)]
         student.science_activity = science_map
