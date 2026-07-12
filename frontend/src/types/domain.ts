@@ -1,3 +1,5 @@
+export type StudentStatus = "active" | "at_risk" | "top_reserve" | "expelled";
+
 export interface Student {
   id: string;
   name: string;
@@ -5,8 +7,36 @@ export interface Student {
   studentId: string;
   course: number;
   rating: number;
-  groupId?: string;
-  departmentId?: string;
+  status: StudentStatus;
+  groupName?: string;
+}
+
+export interface StudentAttendance {
+  weekIndex: number;
+  value: number;
+}
+
+export interface StudentActivity {
+  category: "science" | "project" | "extracurricular";
+  name: string;
+  points: number;
+}
+
+export interface StudentProfile {
+  id: string;
+  name: string;
+  initials: string;
+  studentId: string;
+  course: number;
+  groupName: string;
+  rating: number;
+  status: StudentStatus;
+  totalScore: number;
+  averageScore: number;
+  attendances: StudentAttendance[];
+  activities: StudentActivity[];
+  projectCount: number;
+  attendancePct: number;
 }
 
 export interface DashboardMetrics {

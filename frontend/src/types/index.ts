@@ -2,6 +2,10 @@ export type { ApiResponse, PaginatedResponse, ApiError, PaginationParams } from 
 export type { ScholarshipOffer } from "./scholarship";
 export type {
   Student,
+  StudentStatus,
+  StudentProfile,
+  StudentAttendance,
+  StudentActivity,
   DashboardMetrics,
   GpaBarData,
   AttendanceTrend,
