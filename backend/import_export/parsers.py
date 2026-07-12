@@ -265,3 +265,88 @@ def _parse_main_sheet(raw_rows: list[list[str]]) -> list[ExcelStudentRaw]:
             students.append(student)
 
     return students
+
+
+COLUMN_MAP = {
+    "место": "rank",
+    "ранг": "rank",
+    "номер": "rank",
+    "rank": "rank",
+    "студент": "name",
+    "фио": "name",
+    "имя": "name",
+    "name": "name",
+    "курс": "course",
+    "course": "course",
+    "группа": "group",
+    "group": "group",
+    "учеба": "academic_score",
+    "баллы": "academic_score",
+    "баллы (учеба)": "academic_score",
+    "academic": "academic_score",
+    "активность": "activity_score",
+    "баллы (активность)": "activity_score",
+    "activity": "activity_score",
+    "общий балл": "total_score",
+    "итого": "total_score",
+    "сумма": "total_score",
+    "всего": "total_score",
+    "total": "total_score",
+}
+
+
+def _normalize_key(key: str) -> str:
+    return key.lower().replace("_", " ").replace("-", " ").strip()
+
+
+def parse_flat_excel_buffer(buffer: bytes) -> list[ExcelStudentRaw]:
+    import pandas as pd
+
+    df = pd.read_excel(io.BytesIO(buffer))
+    mapped_keys: dict[str, str | None] = {}
+    for key in df.columns:
+        normalized = _normalize_key(str(key))
+        mapped_keys[key] = COLUMN_MAP.get(normalized)
+
+    def get(row, key_name):
+        for original, mapped in mapped_keys.items():
+            if mapped == key_name:
+                return row.get(original, 0)
+        return 0
+
+    students = []
+    for idx, row in df.iterrows():
+        name = str(get(row, "name") or "").strip()
+        course = int(_to_number(get(row, "course")))
+        group = str(get(row, "group") or "").strip()
+        academic_score = _to_number(get(row, "academic_score"))
+        activity_score = _to_number(get(row, "activity_score"))
+        total_score = _to_number(get(row, "total_score")) or (academic_score + activity_score)
+
+        students.append(
+            ExcelStudentRaw(
+                group_name=group,
+                full_name=name,
+                total_score=total_score,
+                average_score=academic_score,
+                attendance=[],
+                science_activity={},
+                project_activity={},
+                extracurricular={},
+            )
+        )
+    return students
+
+
+def has_multi_level_header(buffer: bytes) -> bool:
+    import pandas as pd
+
+    df = pd.read_excel(io.BytesIO(buffer), header=None, nrows=1)
+    if df.empty:
+        return False
+    first_row = [str(c).lower() for c in df.iloc[0].tolist()]
+    return any(
+        kw in cell
+        for cell in first_row
+        for kw in ["категори", "посещаем", "научн", "проект", "внеучеб"]
+    )
