@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getStudents, updateStudentRating } from "@/services/students";
-import type { PaginatedResponse, Student, PaginationParams } from "@/types";
+import { getStudents, updateStudentRating, updateStudentStatus } from "@/services/students";
+import type { PaginatedResponse, Student, PaginationParams, StudentStatus } from "@/types";
 
 const STUDENT_KEYS = {
   all: ["students"] as const,
@@ -8,6 +8,7 @@ const STUDENT_KEYS = {
   list: (params?: PaginationParams) => [...STUDENT_KEYS.lists(), params] as const,
   details: () => [...STUDENT_KEYS.all, "detail"] as const,
   detail: (id: string) => [...STUDENT_KEYS.details(), id] as const,
+  profile: (id: string) => [...STUDENT_KEYS.all, "profile", id] as const,
 };
 
 export function useStudents(params?: PaginationParams) {
@@ -24,6 +25,20 @@ export function useUpdateStudentRating() {
     mutationFn: ({ id, rating }: { id: string; rating: number }) => updateStudentRating(id, rating),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: STUDENT_KEYS.all });
+    },
+  });
+}
+
+export function useUpdateStudentStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: StudentStatus }) =>
+      updateStudentStatus(id, status),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: STUDENT_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: STUDENT_KEYS.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: STUDENT_KEYS.profile(variables.id) });
     },
   });
 }
