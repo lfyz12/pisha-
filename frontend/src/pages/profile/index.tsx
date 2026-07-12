@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { Icon } from "@/components/ui/icon";
-import { useAuthStore, useMockDataStore } from "@/stores";
+import { useAuthStore } from "@/stores";
+import { useRatingData } from "@/hooks";
 import { cn, formatNumber } from "@/lib/utils";
 
 export default function ProfilePage() {
   const currentUser = useAuthStore((s) => s.currentUser);
-  const mockStore = useMockDataStore();
-  const hasData = mockStore.parsedData !== null;
-  const students = hasData ? mockStore.getRatingStudents() : [];
-  const stats = hasData ? mockStore.getRatingStats() : null;
-  const metrics = hasData ? mockStore.getMetrics() : null;
-  const currentStudent = students.find((s) => s.isCurrentUser);
+  const { rating, metrics } = useRatingData();
+  const ratingStudents = rating.data?.data?.students ?? [];
+  const ratingStats = rating.data?.data?.stats;
+  const dashboardMetrics = metrics.data?.data;
+  const currentStudent = ratingStudents.find((s) => s.isCurrentUser);
 
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(currentUser?.name ?? "");
@@ -38,10 +38,6 @@ export default function ProfilePage() {
 
     if (!password) {
       setPasswordError("Введите текущий пароль");
-      return;
-    }
-    if (password !== "1234") {
-      setPasswordError("Неверный текущий пароль");
       return;
     }
     if (!newPassword || newPassword.length < 4) {
@@ -89,16 +85,16 @@ export default function ProfilePage() {
               )}
             >
               <span className="text-[10px] bg-surface-container-low px-2 py-1 rounded font-semibold text-secondary border border-border-subtle">
-                Рейтинг: {currentStudent?.rank ?? stats?.myPlace ?? "—"}
+                Рейтинг: {currentStudent?.rank ?? ratingStats?.myPlace ?? "—"}
               </span>
               <span className="text-[10px] bg-surface-container-low px-2 py-1 rounded font-semibold text-secondary border border-border-subtle">
                 Баллы: {formatNumber(currentStudent?.totalScore)}
               </span>
               <span className="text-[10px] bg-surface-container-low px-2 py-1 rounded font-semibold text-secondary border border-border-subtle">
-                Средний балл: {formatNumber(metrics?.averageGpa)}
+                Средний балл: {formatNumber(dashboardMetrics?.averageGpa)}
               </span>
               <span className="text-[10px] bg-surface-container-low px-2 py-1 rounded font-semibold text-secondary border border-border-subtle">
-                Посещаемость: {metrics?.attendance ?? "—"}%
+                Посещаемость: {dashboardMetrics?.attendance ?? "—"}%
               </span>
             </div>
           </div>
@@ -325,19 +321,19 @@ export default function ProfilePage() {
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-secondary">Всего студентов</span>
-                  <span className="font-bold">{metrics?.totalStudents ?? "—"}</span>
+                  <span className="font-bold">{dashboardMetrics?.totalStudents ?? "—"}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-secondary">Проектов</span>
-                  <span className="font-bold">{metrics?.projects ?? "—"}</span>
+                  <span className="font-bold">{dashboardMetrics?.projects ?? "—"}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-secondary">Средний балл</span>
-                  <span className="font-bold">{formatNumber(metrics?.averageGpa)}</span>
+                  <span className="font-bold">{formatNumber(dashboardMetrics?.averageGpa)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-secondary">Посещаемость</span>
-                  <span className="font-bold">{metrics?.attendance ?? "—"}%</span>
+                  <span className="font-bold">{dashboardMetrics?.attendance ?? "—"}%</span>
                 </div>
               </div>
             ) : (
@@ -345,7 +341,7 @@ export default function ProfilePage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-secondary">Текущий ранг</span>
                   <span className="font-bold text-primary">
-                    {currentStudent?.rank ?? stats?.myPlace ?? "—"}
+                    {currentStudent?.rank ?? ratingStats?.myPlace ?? "—"}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -365,14 +361,14 @@ export default function ProfilePage() {
                   <span
                     className={cn(
                       "font-bold text-xs uppercase tracking-wider",
-                      stats?.activityLevel === "Высокая"
+                      ratingStats?.activityLevel === "Высокая"
                         ? "text-status-success"
-                        : stats?.activityLevel === "Низкая"
+                        : ratingStats?.activityLevel === "Низкая"
                           ? "text-status-error"
                           : "text-primary"
                     )}
                   >
-                    {stats?.activityLevel ?? "—"}
+                    {ratingStats?.activityLevel ?? "—"}
                   </span>
                 </div>
               </div>
@@ -381,7 +377,7 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      {!isAdmin && students.length > 0 && (
+      {!isAdmin && ratingStudents.length > 0 && (
         <section className="bg-surface-card rounded-xl border border-border-subtle p-4 sm:p-6">
           <h2 className="text-base sm:text-lg font-headline font-bold text-text-main mb-4">
             Успеваемость
