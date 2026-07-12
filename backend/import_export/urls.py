@@ -1,3 +1,7 @@
 from django.urls import path
 
-urlpatterns = []
+from . import views
+
+urlpatterns = [
+    path("excel", views.upload_excel_view, name="import-excel"),
+]
