@@ -11,7 +11,6 @@
     "lint:fix": "eslint . --ext ts,tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\"",
-    "prepare": "husky",
     "typecheck": "tsc --noEmit"
   },
   "lint-staged": {
