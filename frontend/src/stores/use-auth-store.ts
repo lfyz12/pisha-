@@ -1,44 +1,59 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import axios from "axios";
 import type { UserAccount } from "@/types";
+import { apiClient } from "@/lib/api-client";
 
 interface AuthState {
   currentUser: UserAccount | null;
   isAuthenticated: boolean;
-  login: (groupName: string, password: string) => { success: boolean; error?: string };
+  isLoading: boolean;
+  login: (groupName: string, password: string) => Promise<{ success: boolean; error?: string }>;
   loginAs: (account: UserAccount) => void;
   logout: () => void;
 }
 
-const MOCK_PASSWORD = "1234";
-
-export const MOCK_ACCOUNTS: UserAccount[] = [
-  { id: "admin", name: "Администратор", initials: "АД", groupName: "admin", role: "admin" },
-];
+interface LoginResponse {
+  data: {
+    token: string;
+    user: UserAccount;
+  };
+  status: number;
+}
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       currentUser: null,
       isAuthenticated: false,
+      isLoading: false,
 
-      login: (groupName, password) => {
-        if (password !== MOCK_PASSWORD) {
-          return { success: false, error: "Неверный пароль" };
+      login: async (groupName, password) => {
+        if (!groupName.trim() || !password) {
+          return { success: false, error: "Введите логин и пароль" };
         }
 
-        const match = MOCK_ACCOUNTS.find(
-          (a) => a.groupName.toLowerCase() === groupName.toLowerCase()
-        );
-        if (match) {
-          set({ currentUser: match, isAuthenticated: true });
+        set({ isLoading: true });
+        try {
+          const { data } = await apiClient.post<LoginResponse>("/auth/login/", {
+            groupName: groupName.trim(),
+            password,
+          });
+
+          localStorage.setItem("auth-token", data.data.token);
+          set({
+            currentUser: data.data.user,
+            isAuthenticated: true,
+            isLoading: false,
+          });
           return { success: true };
+        } catch (error) {
+          set({ isLoading: false });
+          if (axios.isAxiosError(error) && error.response?.data?.message) {
+            return { success: false, error: error.response.data.message };
+          }
+          return { success: false, error: "Ошибка входа" };
         }
-
-        return {
-          success: false,
-          error: "Аккаунт не найден. Для входа используйте admin/1234 или выберите студента из списка.",
-        };
       },
 
       loginAs: (account) => {
@@ -46,12 +61,16 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        localStorage.removeItem("auth-token");
         set({ currentUser: null, isAuthenticated: false });
       },
     }),
     {
       name: "auth-storage",
-      partialize: (state) => ({ currentUser: state.currentUser, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({
+        currentUser: state.currentUser,
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
   )
 );
