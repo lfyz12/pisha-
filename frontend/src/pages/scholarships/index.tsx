@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Progress } from "@/components/ui/progress";
 import { StudentSelect } from "@/components/student-select";
-import { useScholarshipStore, useAuthStore, useMockDataStore } from "@/stores";
+import { useScholarshipStore, useAuthStore } from "@/stores";
+import { useRatingTable } from "@/hooks";
 import { formatNumber, cn } from "@/lib/utils";
 import type { ScholarshipOffer } from "@/types";
 
@@ -32,16 +33,16 @@ export default function ScholarshipsPage() {
   const fetch = useScholarshipStore((s) => s.fetch);
 
   const currentUser = useAuthStore((s) => s.currentUser);
-  const mockStore = useMockDataStore();
-  const students = mockStore.parsedData ? mockStore.getRatingStudents() : [];
-  const currentStudent = students.find((s) => s.isCurrentUser);
+  const { data: ratingData } = useRatingTable();
+  const ratingStudents = ratingData?.data?.students ?? [];
+  const currentStudent = ratingStudents.find((s) => s.isCurrentUser);
   const isAdmin = currentUser?.role === "admin";
 
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
 
   const targetStudent = isAdmin
     ? selectedStudentId
-      ? students.find((s) => s.id === selectedStudentId)
+      ? ratingStudents.find((s) => s.id === selectedStudentId)
       : null
     : currentStudent;
 
@@ -70,7 +71,7 @@ export default function ScholarshipsPage() {
             Выберите студента
           </label>
           <StudentSelect
-            students={students}
+            students={ratingStudents}
             value={selectedStudentId}
             onChange={setSelectedStudentId}
             placeholder="Выберите студента для просмотра стипендий"
@@ -80,7 +81,7 @@ export default function ScholarshipsPage() {
 
       {isAdmin && !selectedStudentId ? (
         <div className="text-center py-12 text-secondary text-sm">
-          {students.length > 0
+          {ratingStudents.length > 0
             ? "Выберите студента, чтобы увидеть доступные ему стипендии"
             : "Загрузите данные на странице рейтинга"}
         </div>
