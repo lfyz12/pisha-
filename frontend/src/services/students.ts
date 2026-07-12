@@ -46,7 +46,9 @@ function mapProfile(raw: Record<string, unknown>): StudentProfile {
 }
 
 export async function getStudents(params?: PaginationParams): Promise<PaginatedResponse<Student>> {
-  const { data } = await apiClient.get<PaginatedResponse<Student>>("/students", { params });
+  const { data } = await apiClient.get<PaginatedResponse<Record<string, unknown>>>("/students", {
+    params,
+  });
   return {
     ...data,
     data: data.data.map(mapStudent),
@@ -54,12 +56,14 @@ export async function getStudents(params?: PaginationParams): Promise<PaginatedR
 }
 
 export async function getStudent(id: string): Promise<ApiResponse<StudentProfile>> {
-  const { data } = await apiClient.get<ApiResponse<StudentProfile>>(`/students/${id}`);
+  const { data } = await apiClient.get<ApiResponse<Record<string, unknown>>>(`/students/${id}`);
   return { ...data, data: mapProfile(data.data) };
 }
 
 export async function getStudentProfile(id: string): Promise<ApiResponse<StudentProfile>> {
-  const { data } = await apiClient.get<ApiResponse<StudentProfile>>(`/students/${id}/profile`);
+  const { data } = await apiClient.get<ApiResponse<Record<string, unknown>>>(
+    `/students/${id}/profile`
+  );
   return { ...data, data: mapProfile(data.data) };
 }
 
@@ -67,7 +71,9 @@ export async function updateStudentRating(
   id: string,
   rating: number
 ): Promise<ApiResponse<Student>> {
-  const { data } = await apiClient.patch<ApiResponse<Student>>(`/students/${id}`, { rating });
+  const { data } = await apiClient.patch<ApiResponse<Record<string, unknown>>>(`/students/${id}`, {
+    rating,
+  });
   return { ...data, data: mapStudent(data.data) };
 }
 
@@ -75,6 +81,8 @@ export async function updateStudentStatus(
   id: string,
   status: StudentStatus
 ): Promise<ApiResponse<Student>> {
-  const { data } = await apiClient.patch<ApiResponse<Student>>(`/students/${id}`, { status });
+  const { data } = await apiClient.patch<ApiResponse<Record<string, unknown>>>(`/students/${id}`, {
+    status,
+  });
   return { ...data, data: mapStudent(data.data) };
 }

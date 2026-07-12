@@ -20,4 +20,5 @@ export type {
   ScholarshipFilter,
   Notification,
   UserAccount,
+  ImportSummary,
 } from "./domain";

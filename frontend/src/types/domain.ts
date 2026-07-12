@@ -156,3 +156,8 @@ export interface UserAccount {
   role: "student" | "admin";
   avatarUrl?: string;
 }
+
+export interface ImportSummary {
+  studentsImported: number;
+  eventsImported: number;
+}

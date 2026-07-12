@@ -1,10 +1,5 @@
-import type { ApiResponse } from "@/types";
+import type { ApiResponse, ImportSummary } from "@/types";
 import { apiClient } from "@/lib/api-client";
-
-export interface ImportSummary {
-  studentsImported: number;
-  eventsImported: number;
-}
 
 interface ImportSummaryRaw {
   students_imported: number;

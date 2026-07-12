@@ -4,6 +4,10 @@ import axios from "axios";
 import type { UserAccount } from "@/types";
 import { apiClient } from "@/lib/api-client";
 
+export const MOCK_ACCOUNTS: UserAccount[] = [
+  { id: "admin", name: "Администратор", initials: "АД", groupName: "admin", role: "admin" },
+];
+
 interface AuthState {
   currentUser: UserAccount | null;
   isAuthenticated: boolean;
