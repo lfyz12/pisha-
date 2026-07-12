@@ -1,31 +1,30 @@
-import { useRef, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminOnly } from "@/components/admin-only";
-import { useStudents, useUpdateStudentRating } from "@/hooks";
-import { useMockDataStore } from "@/stores";
-import { parseRatingExcel } from "@/lib/parse-rating-excel";
-import { importExcelFromFile, type ImportResult } from "@/lib/import-excel";
+import { useStudents, useUpdateStudentRating, useUpdateStudentStatus } from "@/hooks";
 import { formatNumber } from "@/lib/utils";
-import type { Student } from "@/types";
+import type { Student, StudentStatus } from "@/types";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZES = [10, 30, 50, 100];
 
+const STATUS_LABELS: Record<StudentStatus, string> = {
+  active: "Активен",
+  at_risk: "В группе риска",
+  top_reserve: "Топ-резерв",
+  expelled: "Отчислен",
+};
+
 export function StudentTableSection() {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [importError, setImportError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const mockStore = useMockDataStore();
-  const hasMockData = mockStore.parsedData !== null;
-  const mockStudents: Student[] = hasMockData ? mockStore.getStudents() : [];
-
   const { data, isLoading, error } = useStudents({ page: 1, pageSize: 10 });
   const updateRating = useUpdateStudentRating();
-  const students: Student[] = hasMockData ? mockStudents : (data?.data ?? []);
+  const updateStatus = useUpdateStudentStatus();
+  const students: Student[] = data?.data ?? [];
 
   const filtered = useMemo(() => {
     if (!searchTerm) return students;
@@ -49,38 +48,9 @@ export function StudentTableSection() {
     }
   };
 
-  const handleExcelImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImportError("");
-    try {
-      const data = await parseRatingExcel(file);
-      mockStore.setExcelData(data, file.name);
-    } catch {
-      try {
-        const result = await importExcelFromFile(file);
-        if ("students" in result && "stats" in result) {
-          const simpleResult = result as ImportResult;
-          const convertedData = {
-            students: simpleResult.students.map((s) => ({
-              groupName: s.group,
-              fullName: s.name,
-              totalScore: s.totalScore,
-              averageScore: s.academicScore,
-              attendance: [] as number[],
-              scienceActivity: {} as Record<string, number>,
-              projectActivity: {} as Record<string, number>,
-              extracurricular: {} as Record<string, number>,
-            })),
-            events: [],
-          };
-          mockStore.setExcelData(convertedData, file.name);
-        }
-      } catch {
-        setImportError("Не удалось прочитать Excel-файл");
-      }
-    }
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const handleStatusChange = (id: string, value: string) => {
+    const status = value as StudentStatus;
+    updateStatus.mutate({ id, status });
   };
 
   const getPageNumbers = () => {
@@ -101,15 +71,6 @@ export function StudentTableSection() {
 
   return (
     <div className="xl:col-span-2 bg-surface-card rounded-lg border border-border-subtle shadow-sm overflow-hidden">
-      <AdminOnly>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".xlsx,.xls"
-          onChange={handleExcelImport}
-          className="hidden"
-        />
-      </AdminOnly>
       <div className="p-3 sm:p-4 border-b border-border-subtle flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <h3 className="text-sm font-headline font-bold">База данных студентов</h3>
         <div className="flex items-center gap-2">
@@ -126,26 +87,6 @@ export function StudentTableSection() {
               className="w-full pl-7 pr-2 py-1.5 bg-surface-container-low border border-border-subtle rounded text-xs focus:outline-none focus:border-primary"
             />
           </div>
-          {importError && <span className="text-status-error text-xs">{importError}</span>}
-          <AdminOnly>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="bg-secondary-container text-text-main px-2.5 py-1.5 rounded text-xs font-label flex items-center gap-1 hover:bg-surface-container-highest transition-colors"
-            >
-              <Icon name="upload" className="text-sm" />
-              <span className="hidden sm:inline">Импорт .xlsx</span>
-            </button>
-          </AdminOnly>
-          {hasMockData && (
-            <AdminOnly>
-              <button
-                onClick={() => mockStore.clear()}
-                className="text-status-error text-xs font-label underline hover:no-underline"
-              >
-                Сбросить
-              </button>
-            </AdminOnly>
-          )}
         </div>
       </div>
 
@@ -156,6 +97,7 @@ export function StudentTableSection() {
             <col className="w-[100px]" />
             <col className="w-[80px]" />
             <col className="w-[80px]" />
+            <col className="w-[120px]" />
             <AdminOnly>
               <col className="w-[90px]" />
             </AdminOnly>
@@ -166,51 +108,14 @@ export function StudentTableSection() {
               <th className="px-3 sm:px-4 py-3 font-medium">ID</th>
               <th className="px-3 sm:px-4 py-3 font-medium">Курс</th>
               <th className="px-3 sm:px-4 py-3 font-medium text-center">Рейтинг</th>
+              <th className="px-3 sm:px-4 py-3 font-medium text-center">Статус</th>
               <AdminOnly>
                 <th className="px-3 sm:px-4 py-3 font-medium text-center">Действие</th>
               </AdminOnly>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-subtle">
-            {hasMockData ? (
-              paginated.map((student) => (
-                <tr
-                  key={student.id}
-                  className="hover:bg-surface-container-low transition-colors group"
-                >
-                  <td className="px-3 sm:px-4 py-3">
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-secondary-fixed rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold shrink-0">
-                        {student.initials}
-                      </div>
-                      <span className="text-xs sm:text-sm font-medium truncate">
-                        {student.name}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-secondary font-mono truncate">
-                    {student.studentId}
-                  </td>
-                  <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm">{student.course} Курс</td>
-                  <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm font-bold text-primary text-center">
-                    {formatNumber(student.rating)}
-                  </td>
-                  <AdminOnly>
-                    <td className="px-3 sm:px-4 py-3 text-center">
-                      <input
-                        className="w-14 sm:w-16 bg-transparent border border-border-subtle rounded px-1.5 sm:px-2 py-1 text-xs sm:text-sm font-bold text-primary focus:outline-none focus:border-primary text-center"
-                        type="number"
-                        defaultValue={student.rating}
-                        step={0.1}
-                        min={0}
-                        max={5}
-                        onBlur={(e) => handleRatingChange(student.id, e.target.value)}
-                      />
-                    </td>
-                  </AdminOnly>
-                </tr>
-              ))
-            ) : isLoading ? (
+            {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
                   <td className="px-3 sm:px-4 py-3">
@@ -228,6 +133,9 @@ export function StudentTableSection() {
                   <td className="px-3 sm:px-4 py-3">
                     <Skeleton className="h-4 w-8 sm:w-10" />
                   </td>
+                  <td className="px-3 sm:px-4 py-3">
+                    <Skeleton className="h-4 w-20 sm:w-24" />
+                  </td>
                   <AdminOnly>
                     <td className="px-3 sm:px-4 py-3">
                       <Skeleton className="h-4 w-4" />
@@ -237,13 +145,13 @@ export function StudentTableSection() {
               ))
             ) : error ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-status-error text-sm">
+                <td colSpan={6} className="px-4 py-8 text-center text-status-error text-sm">
                   Ошибка загрузки данных
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-secondary text-sm">
+                <td colSpan={6} className="px-4 py-8 text-center text-secondary text-sm">
                   {searchTerm ? "Ничего не найдено" : "Нет данных"}
                 </td>
               </tr>
@@ -269,6 +177,23 @@ export function StudentTableSection() {
                   <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm">{student.course} Курс</td>
                   <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm font-bold text-primary text-center">
                     {formatNumber(student.rating)}
+                  </td>
+                  <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-center">
+                    <AdminOnly>
+                      <select
+                        value={student.status}
+                        onChange={(e) => handleStatusChange(student.id, e.target.value)}
+                        disabled={updateStatus.isPending}
+                        className="bg-surface-container-low border border-border-subtle rounded px-2 py-1 text-xs focus:outline-none focus:border-primary disabled:opacity-50"
+                      >
+                        {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </AdminOnly>
+                    <span className="sm:hidden">{STATUS_LABELS[student.status]}</span>
                   </td>
                   <AdminOnly>
                     <td className="px-3 sm:px-4 py-3 text-center">
