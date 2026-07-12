@@ -2,53 +2,40 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Icon } from "@/components/ui/icon";
 import { StudentSelect } from "@/components/student-select";
-import { useAuthStore, useMockDataStore } from "@/stores";
+import { useAuthStore } from "@/stores";
+import { useRatingData, useStudentProfile } from "@/hooks";
 import { cn, formatNumber } from "@/lib/utils";
 import type { RatingStudent } from "@/types";
 
 export default function OverviewPage() {
   const navigate = useNavigate();
   const currentUser = useAuthStore((s) => s.currentUser);
-  const mockStore = useMockDataStore();
-  const hasData = mockStore.parsedData !== null;
-
-  const students = hasData ? mockStore.getRatingStudents() : [];
-  const stats = hasData ? mockStore.getRatingStats() : null;
-  const metrics = hasData ? mockStore.getMetrics() : null;
-  const top3 = students.slice(0, 3);
-  const me = students.find((s) => s.isCurrentUser);
   const isAdmin = currentUser?.role === "admin";
+
+  const { rating, metrics } = useRatingData();
+  const ratingStudents = rating.data?.data?.students ?? [];
+  const ratingStats = rating.data?.data?.stats;
+  const dashboardMetrics = metrics.data?.data;
 
   const [viewingStudent, setViewingStudent] = useState<RatingStudent | null>(null);
 
-  const targetStudent = viewingStudent ?? me;
+  const targetStudent = viewingStudent ?? ratingStudents.find((s) => s.isCurrentUser);
+  const currentStudent = ratingStudents.find((s) => s.isCurrentUser);
   const targetScore = targetStudent?.totalScore ?? 0;
 
-  const rawStudents = mockStore.parsedData?.students ?? [];
-  const rawTarget = targetStudent
-    ? rawStudents.find((s) => s.fullName === targetStudent.name)
-    : null;
+  const { data: profileData } = useStudentProfile(targetStudent?.id ?? null);
+  const profile = profileData?.data;
 
-  const attendPct = rawTarget
-    ? Math.min(
-        100,
-        Math.round(
-          (rawTarget.attendance.reduce((a, b) => a + b, 0) /
-            Math.max(rawTarget.attendance.length, 1)) *
-            100
-        )
-      )
-    : undefined;
+  const attendPct = profile?.attendancePct;
+  const projectCount = profile?.projectCount;
 
-  const projectCount = rawTarget ? Object.keys(rawTarget.projectActivity).length : undefined;
-
-  const rank = targetStudent?.rank ?? stats?.myPlace ?? 14;
-  const totalStudents = students.length || 550;
+  const rank = targetStudent?.rank ?? ratingStats?.myPlace ?? 0;
+  const totalStudents = dashboardMetrics?.totalStudents ?? ratingStudents.length ?? 0;
   const myScore = targetScore;
-  const maxScore = students[0]?.totalScore ?? 1000;
-  const scorePercent = maxScore > 0 ? Math.round((myScore / maxScore) * 100) : 74;
+  const maxScore = ratingStudents[0]?.totalScore ?? 0;
+  const scorePercent = maxScore > 0 ? Math.round((myScore / maxScore) * 100) : 0;
   const rankPercent =
-    totalStudents > 0 ? Math.round(((totalStudents - rank) / totalStudents) * 100) : 3;
+    totalStudents > 0 ? Math.round(((totalStudents - rank) / totalStudents) * 100) : 0;
 
   const studentName = targetStudent?.name ?? currentUser?.name ?? "Студент";
   const studentGroup = targetStudent?.group ?? currentUser?.groupName ?? "";
@@ -59,13 +46,13 @@ export default function OverviewPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <label className="text-sm font-semibold text-text-main">Просмотр студента:</label>
-            {hasData && students.length > 0 ? (
+            {ratingStudents.length > 0 ? (
               <div className="w-full sm:w-64">
                 <StudentSelect
-                  students={students}
+                  students={ratingStudents}
                   value={targetStudent?.id ?? null}
                   onChange={(id) => {
-                    const s = id ? students.find((st) => st.id === id) : null;
+                    const s = id ? ratingStudents.find((st) => st.id === id) : null;
                     setViewingStudent(s ?? null);
                   }}
                   placeholder="Сводка по всем"
@@ -156,8 +143,8 @@ export default function OverviewPage() {
               {targetStudent
                 ? formatNumber(targetStudent.academicScore)
                 : isAdmin
-                  ? formatNumber(metrics?.averageGpa)
-                  : formatNumber(me?.academicScore)}
+                  ? formatNumber(dashboardMetrics?.averageGpa)
+                  : formatNumber(currentStudent?.academicScore)}
             </div>
             {!isAdmin && !targetStudent && (
               <div className="text-status-success text-xs font-semibold flex items-center mt-1">
@@ -174,7 +161,7 @@ export default function OverviewPage() {
               {targetStudent
                 ? (attendPct ?? "—") + "%"
                 : isAdmin
-                  ? (metrics?.attendance ?? "—") + "%"
+                  ? (dashboardMetrics?.attendance ?? "—") + "%"
                   : (attendPct ?? "—") + "%"}
             </div>
             <div className="text-status-success text-xs font-semibold flex items-center mt-1">
@@ -190,7 +177,7 @@ export default function OverviewPage() {
               {targetStudent
                 ? (projectCount ?? "—")
                 : isAdmin
-                  ? (metrics?.projects ?? "—")
+                  ? (dashboardMetrics?.projects ?? "—")
                   : (projectCount ?? "—")}
             </div>
             <div className="text-secondary text-xs font-semibold mt-1">
@@ -209,16 +196,16 @@ export default function OverviewPage() {
             <div className="text-xl font-headline font-bold">
               {targetStudent
                 ? formatNumber(targetStudent.activityScore)
-                : formatNumber(me?.activityScore)}
+                : formatNumber(currentStudent?.activityScore)}
             </div>
             <div className="text-primary text-xs font-semibold mt-1">
               {targetStudent
                 ? targetStudent.trend === "up"
                   ? "Высокая активность"
                   : "Средняя активность"
-                : stats?.activityLevel === "Высокая"
+                : ratingStats?.activityLevel === "Высокая"
                   ? "Высокая активность"
-                  : stats?.activityLevel === "Низкая"
+                  : ratingStats?.activityLevel === "Низкая"
                     ? "Низкая активность"
                     : "Средняя активность"}
             </div>
@@ -256,9 +243,9 @@ export default function OverviewPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle text-sm">
-                {hasData ? (
+                {ratingStudents.length > 0 ? (
                   <>
-                    {top3.map((s) => (
+                    {ratingStudents.slice(0, 3).map((s) => (
                       <tr
                         key={s.id}
                         onClick={() => isAdmin && setViewingStudent(s)}
@@ -305,35 +292,39 @@ export default function OverviewPage() {
                         </td>
                       </tr>
                     ))}
-                    {me && !top3.find((s) => s.isCurrentUser) && (
+                    {currentStudent && !ratingStudents.slice(0, 3).find((s) => s.isCurrentUser) && (
                       <tr
-                        onClick={() => isAdmin && setViewingStudent(me)}
+                        onClick={() => isAdmin && setViewingStudent(currentStudent)}
                         className={cn("border-l-4 border-primary", isAdmin ? "cursor-pointer" : "")}
                         style={{ backgroundColor: "var(--color-primary-fixed)" }}
                       >
                         <td className="px-5 py-3 font-bold text-primary">
-                          {String(me.rank).padStart(2, "0")}
+                          {String(currentStudent.rank).padStart(2, "0")}
                         </td>
                         <td className="px-5 py-3 min-w-0">
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-                              {me.name
+                              {currentStudent.name
                                 .split(" ")
                                 .map((n) => n[0])
                                 .join("")
                                 .slice(0, 2)}
                             </div>
-                            <span className="font-bold text-primary truncate">{me.name} (Вы)</span>
+                            <span className="font-bold text-primary truncate">
+                              {currentStudent.name} (Вы)
+                            </span>
                           </div>
                         </td>
-                        <td className="px-5 py-3 text-primary font-medium truncate">{me.group}</td>
+                        <td className="px-5 py-3 text-primary font-medium truncate">
+                          {currentStudent.group}
+                        </td>
                         <td className="px-5 py-3 font-bold text-primary">
-                          {formatNumber(me.totalScore)}
+                          {formatNumber(currentStudent.totalScore)}
                         </td>
                         <td className="px-5 py-3 text-right text-primary">
-                          {me.trend === "up" && <Icon name="expand_less" />}
-                          {me.trend === "stable" && <Icon name="remove" />}
-                          {me.trend === "down" && <Icon name="expand_more" />}
+                          {currentStudent.trend === "up" && <Icon name="expand_less" />}
+                          {currentStudent.trend === "stable" && <Icon name="remove" />}
+                          {currentStudent.trend === "down" && <Icon name="expand_more" />}
                         </td>
                       </tr>
                     )}
@@ -341,7 +332,7 @@ export default function OverviewPage() {
                 ) : (
                   <tr>
                     <td colSpan={5} className="px-5 py-8 text-center text-secondary text-sm">
-                      {students.length === 0 ? "Загрузите данные из Excel" : "Нет данных"}
+                      {ratingStudents.length === 0 ? "Загрузите данные из Excel" : "Нет данных"}
                     </td>
                   </tr>
                 )}
@@ -349,9 +340,9 @@ export default function OverviewPage() {
             </table>
           </div>
           <div className="sm:hidden divide-y divide-border-subtle">
-            {hasData ? (
+            {ratingStudents.length > 0 ? (
               <>
-                {top3.map((s) => (
+                {ratingStudents.slice(0, 3).map((s) => (
                   <div
                     key={s.id}
                     onClick={() => isAdmin && setViewingStudent(s)}
@@ -390,9 +381,9 @@ export default function OverviewPage() {
                     </div>
                   </div>
                 ))}
-                {me && !top3.find((s) => s.isCurrentUser) && (
+                {currentStudent && !ratingStudents.slice(0, 3).find((s) => s.isCurrentUser) && (
                   <div
-                    onClick={() => isAdmin && setViewingStudent(me)}
+                    onClick={() => isAdmin && setViewingStudent(currentStudent)}
                     className={cn(
                       "p-4 border-l-4 border-primary hover:bg-surface-container-low transition-colors",
                       isAdmin && "cursor-pointer"
@@ -401,17 +392,17 @@ export default function OverviewPage() {
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <span className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs font-bold shrink-0">
-                        {me.rank}
+                        {currentStudent.rank}
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-bold text-primary truncate">
-                          {me.name} (Вы)
+                          {currentStudent.name} (Вы)
                         </div>
-                        <div className="text-xs text-primary">{me.group}</div>
+                        <div className="text-xs text-primary">{currentStudent.group}</div>
                       </div>
                       <div className="text-right shrink-0">
                         <div className="text-sm font-bold text-primary">
-                          {formatNumber(me.totalScore)}
+                          {formatNumber(currentStudent.totalScore)}
                         </div>
                       </div>
                     </div>
@@ -420,7 +411,7 @@ export default function OverviewPage() {
               </>
             ) : (
               <div className="px-5 py-8 text-center text-secondary text-sm">
-                {students.length === 0 ? "Загрузите данные из Excel" : "Нет данных"}
+                {ratingStudents.length === 0 ? "Загрузите данные из Excel" : "Нет данных"}
               </div>
             )}
           </div>
