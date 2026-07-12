@@ -3,9 +3,8 @@ import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminOnly } from "@/components/admin-only";
 import { useStudents, useUpdateStudentRating, useUpdateStudentStatus } from "@/hooks";
-import { formatNumber } from "@/lib/utils";
+import { cn, formatNumber } from "@/lib/utils";
 import type { Student, StudentStatus } from "@/types";
-import { cn } from "@/lib/utils";
 
 const PAGE_SIZES = [10, 30, 50, 100];
 
@@ -24,7 +23,7 @@ export function StudentTableSection() {
   const { data, isLoading, error } = useStudents({ page: 1, pageSize: 10 });
   const updateRating = useUpdateStudentRating();
   const updateStatus = useUpdateStudentStatus();
-  const students: Student[] = data?.data ?? [];
+  const students = useMemo<Student[]>(() => data?.data ?? [], [data]);
 
   const filtered = useMemo(() => {
     if (!searchTerm) return students;
