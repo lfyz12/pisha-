@@ -150,9 +150,7 @@ export default function AnalyticsPage() {
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <BarChartSection />
-        <div id="attendance-chart">
-          <LineChartSection />
-        </div>
+        <LineChartSection id="attendance-chart" />
       </section>
 
       {ratingStudents.length > 0 && (

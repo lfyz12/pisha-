@@ -3,15 +3,16 @@ import { useAttendanceTrends } from "@/hooks";
 import type { AttendanceTrend } from "@/types";
 
 interface LineChartSectionProps {
+  id?: string;
   mockData?: AttendanceTrend[];
 }
 
-export function LineChartSection({ mockData }: LineChartSectionProps) {
+export function LineChartSection({ id, mockData }: LineChartSectionProps) {
   const { data, isLoading, error } = useAttendanceTrends();
   const trends: AttendanceTrend[] = mockData ?? data?.data ?? [];
 
   return (
-    <div className="bg-surface-card p-xl rounded-lg border border-border-subtle shadow-sm">
+    <div id={id} className="bg-surface-card p-xl rounded-lg border border-border-subtle shadow-sm">
       <div className="flex justify-between items-center mb-xl">
         <h3 className="text-[--text-headline-sm] font-headline-sm">Тренды посещаемости</h3>
         <div className="flex space-x-sm">
