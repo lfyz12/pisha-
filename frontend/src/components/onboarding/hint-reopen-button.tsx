@@ -57,7 +57,6 @@ export function HintReopenButton({
           "flex items-center justify-center text-primary hover:bg-accent transition-colors"
         )}
         aria-expanded={open}
-        aria-haspopup="menu"
         aria-label={open ? "Закрыть меню подсказок" : "Показать подсказки"}
       >
         <Icon name="help" />
