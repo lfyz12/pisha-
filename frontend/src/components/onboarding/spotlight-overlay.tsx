@@ -22,10 +22,19 @@ export function SpotlightOverlay({ targetId, visible }: SpotlightOverlayProps) {
   const reducedMotion = useReducedMotion();
 
   useLayoutEffect(() => {
-    if (!targetId || !visible) return;
+    if (!targetId || !visible) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRect(null);
+      return;
+    }
+    let rafId: number | null = null;
     const measure = () => {
-      const el = document.getElementById(targetId);
-      setRect(el ? el.getBoundingClientRect() : null);
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        const el = document.getElementById(targetId);
+        setRect(el ? el.getBoundingClientRect() : null);
+      });
     };
     measure();
     window.addEventListener("resize", measure);
@@ -33,6 +42,9 @@ export function SpotlightOverlay({ targetId, visible }: SpotlightOverlayProps) {
     return () => {
       window.removeEventListener("resize", measure);
       window.removeEventListener("scroll", measure, true);
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
     };
   }, [targetId, visible]);
 
