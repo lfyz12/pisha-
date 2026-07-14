@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Icon } from "@/components/ui/icon";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { StudentSelect } from "@/components/student-select";
 import { useAuthStore } from "@/stores";
 import { useRatingData, useStudentProfile } from "@/hooks";
@@ -516,9 +517,9 @@ export default function OverviewPage() {
                     </p>
                   </div>
                 </div>
-                <button className="bg-primary text-on-primary px-3 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity">
+                <RippleButton className="rounded-lg px-3 py-1.5 text-xs font-bold">
                   Подать заявку
-                </button>
+                </RippleButton>
               </div>
               <div className="bg-surface-card p-4 rounded-lg border-l-4 border-primary flex justify-between items-center">
                 <div className="flex items-center gap-3">
