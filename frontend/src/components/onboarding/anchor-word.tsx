@@ -9,25 +9,21 @@ interface AnchorWordProps {
 
 export function AnchorWord({ word, targetId, active, onActivate }: AnchorWordProps) {
   return (
-    <span
-      role="button"
-      tabIndex={0}
+    <button
+      type="button"
       className={cn(
-        "font-semibold text-primary border-b border-dashed border-primary cursor-pointer",
-        active && "text-primary-foreground"
+        "inline font-semibold text-primary border-b border-dashed border-primary cursor-pointer",
+        "bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded",
+        active && "bg-primary text-primary-foreground rounded px-0.5"
       )}
       onMouseEnter={() => onActivate(targetId)}
       onMouseLeave={() => onActivate(null)}
       onFocus={() => onActivate(targetId)}
       onBlur={() => onActivate(null)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onActivate(targetId);
-        }
-      }}
+      onClick={() => onActivate(active ? null : targetId)}
+      aria-pressed={active}
     >
       {word}
-    </span>
+    </button>
   );
 }

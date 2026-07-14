@@ -29,14 +29,14 @@ export function ContextualHint({ hint, onDismiss, onHide }: ContextualHintProps)
           {splitText(hint.text, hint.anchors).map((part, i) =>
             part.type === "anchor" ? (
               <AnchorWord
-                key={i}
+                key={`anchor-${part.targetId}-${i}`}
                 word={part.word}
                 targetId={part.targetId}
                 active={activeTarget === part.targetId}
                 onActivate={setActiveTarget}
               />
             ) : (
-              <span key={i}>{part.text}</span>
+              <span key={`text-${i}-${part.text.slice(0, 8)}`}>{part.text}</span>
             )
           )}
         </p>
@@ -61,20 +61,36 @@ export function ContextualHint({ hint, onDismiss, onHide }: ContextualHintProps)
   );
 }
 
-type Part =
-  | { type: "text"; text: string }
-  | { type: "anchor"; word: string; targetId: string };
+type Part = { type: "text"; text: string } | { type: "anchor"; word: string; targetId: string };
 
 function splitText(text: string, anchors: { word: string; targetId: string }[]): Part[] {
   const parts: Part[] = [];
   let remaining = text;
-  anchors.forEach((anchor) => {
-    const index = remaining.indexOf(anchor.word);
-    if (index === -1) return;
-    if (index > 0) parts.push({ type: "text", text: remaining.slice(0, index) });
-    parts.push({ type: "anchor", word: anchor.word, targetId: anchor.targetId });
-    remaining = remaining.slice(index + anchor.word.length);
-  });
-  if (remaining) parts.push({ type: "text", text: remaining });
+
+  while (remaining.length > 0) {
+    let earliest: { index: number; anchor: { word: string; targetId: string } } | null = null;
+    for (const anchor of anchors) {
+      const index = remaining.indexOf(anchor.word);
+      if (index !== -1 && (earliest === null || index < earliest.index)) {
+        earliest = { index, anchor };
+      }
+    }
+
+    if (!earliest) {
+      parts.push({ type: "text", text: remaining });
+      break;
+    }
+
+    if (earliest.index > 0) {
+      parts.push({ type: "text", text: remaining.slice(0, earliest.index) });
+    }
+    parts.push({
+      type: "anchor",
+      word: earliest.anchor.word,
+      targetId: earliest.anchor.targetId,
+    });
+    remaining = remaining.slice(earliest.index + earliest.anchor.word.length);
+  }
+
   return parts;
 }
