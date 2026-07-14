@@ -1,34 +1,31 @@
-import {
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import {
-  OnboardingContext,
-  type OnboardingState,
-} from "./onboarding-context";
+import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { OnboardingContext, type OnboardingState } from "./onboarding-context";
 
 const STORAGE_KEY = "pisha-onboarding";
 
+function parseStored(raw: string | null): Record<string, OnboardingState> {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, OnboardingState>;
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return {};
+}
+
 function readStored(userId: string | undefined): OnboardingState {
   if (!userId) return { dismissed: [], hidden: [] };
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { dismissed: [], hidden: [] };
-    const parsed = JSON.parse(raw) as Record<string, OnboardingState>;
-    return parsed[userId] ?? { dismissed: [], hidden: [] };
-  } catch {
-    return { dismissed: [], hidden: [] };
-  }
+  const parsed = parseStored(localStorage.getItem(STORAGE_KEY));
+  return parsed[userId] ?? { dismissed: [], hidden: [] };
 }
 
 function writeStored(userId: string | undefined, state: OnboardingState) {
   if (!userId) return;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? (JSON.parse(raw) as Record<string, OnboardingState>) : {};
+    const parsed = parseStored(localStorage.getItem(STORAGE_KEY));
     parsed[userId] = state;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
   } catch {
@@ -64,15 +61,9 @@ function OnboardingProviderInner({
     setHidden([]);
   }, []);
 
-  const isDismissed = useCallback(
-    (key: string) => dismissed.includes(key),
-    [dismissed]
-  );
+  const isDismissed = useCallback((key: string) => dismissed.includes(key), [dismissed]);
 
-  const isHidden = useCallback(
-    (key: string) => hidden.includes(key),
-    [hidden]
-  );
+  const isHidden = useCallback((key: string) => hidden.includes(key), [hidden]);
 
   const value = useMemo(
     () => ({
@@ -87,11 +78,7 @@ function OnboardingProviderInner({
     [dismissed, hidden, dismiss, hide, reset, isDismissed, isHidden]
   );
 
-  return (
-    <OnboardingContext.Provider value={value}>
-      {children}
-    </OnboardingContext.Provider>
-  );
+  return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>;
 }
 
 export function OnboardingProvider({
