@@ -36,10 +36,7 @@ export function LineChartSection({ mockData }: LineChartSectionProps) {
         <>
           <div className="h-32 relative flex items-end">
             <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 400 100">
-              <path
-                className="stroke-primary stroke-2 fill-none"
-                d={generateSmoothPath(trends)}
-              />
+              <path className="stroke-primary stroke-2 fill-none" d={generateSmoothPath(trends)} />
               <path
                 d={`${generateSmoothPath(trends)} L400,100 L0,100 Z`}
                 fill="rgba(221, 94, 39, 0.05)"

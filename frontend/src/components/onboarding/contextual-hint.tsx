@@ -21,11 +21,13 @@ export function ContextualHint({ hint, onDismiss, onHide }: ContextualHintProps)
           "fixed bottom-6 right-6 z-50 w-80 rounded-lg border border-border",
           "bg-card p-4 shadow-lg border-l-4 border-l-primary"
         )}
-        role="status"
-        aria-live="polite"
       >
         <h4 className="font-semibold text-sm mb-2">{hint.title}</h4>
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p
+          className="text-sm text-muted-foreground leading-relaxed"
+          role="status"
+          aria-live="polite"
+        >
           {splitText(hint.text, hint.anchors).map((part, i) =>
             part.type === "anchor" ? (
               <AnchorWord

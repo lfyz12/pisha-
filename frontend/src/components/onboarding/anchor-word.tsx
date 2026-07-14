@@ -12,7 +12,7 @@ export function AnchorWord({ word, targetId, active, onActivate }: AnchorWordPro
     <button
       type="button"
       className={cn(
-        "inline font-semibold text-primary border-b border-dashed border-primary cursor-pointer",
+        "inline font-semibold text-primary border-b border-dashed border-primary",
         "bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded",
         active && "bg-primary text-primary-foreground rounded px-0.5"
       )}
@@ -21,6 +21,7 @@ export function AnchorWord({ word, targetId, active, onActivate }: AnchorWordPro
       onFocus={() => onActivate(targetId)}
       onBlur={() => onActivate(null)}
       onClick={() => onActivate(active ? null : targetId)}
+      aria-label={`Подсветить ${word}`}
       aria-pressed={active}
     >
       {word}

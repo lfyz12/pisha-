@@ -96,16 +96,32 @@ export const adminHints: Hint[] = [
 
 export const appTourSteps: Record<"student" | "admin", TourStep[]> = {
   student: [
-    { targetId: "nav-rating", title: "Рейтинг", text: "Ваше положение в общем рейтинге и фильтры." },
-    { targetId: "nav-scholarships", title: "Стипендии", text: "Доступные стипендии на основе рейтинга." },
-    { targetId: "nav-analytics", title: "Аналитика", text: "Баллы, посещаемость и характеристики." },
+    {
+      targetId: "nav-rating",
+      title: "Рейтинг",
+      text: "Ваше положение в общем рейтинге и фильтры.",
+    },
+    {
+      targetId: "nav-scholarships",
+      title: "Стипендии",
+      text: "Доступные стипендии на основе рейтинга.",
+    },
+    {
+      targetId: "nav-analytics",
+      title: "Аналитика",
+      text: "Баллы, посещаемость и характеристики.",
+    },
     { targetId: "nav-chat", title: "ИИ-чат", text: "Задавайте вопросы ИИ-ассистенту." },
     { targetId: "nav-profile", title: "Профиль", text: "Контакты и смена пароля." },
   ],
   admin: [
     { targetId: "nav-admin-import", title: "Импорт", text: "Загрузка данных из Excel." },
     { targetId: "nav-admin-policies", title: "Политики", text: "Управление видимостью данных." },
-    { targetId: "nav-admin-scoring", title: "Начисление", text: "Начисление баллов за активность." },
+    {
+      targetId: "nav-admin-scoring",
+      title: "Начисление",
+      text: "Начисление баллов за активность.",
+    },
     { targetId: "nav-admin-ai-rules", title: "ИИ-правила", text: "Правила для ИИ-ассистента." },
   ],
 };
