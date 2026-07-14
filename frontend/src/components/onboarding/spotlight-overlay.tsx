@@ -1,4 +1,16 @@
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState, useSyncExternalStore } from "react";
+
+function useReducedMotion() {
+  return useSyncExternalStore(
+    (callback) => {
+      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+      mq.addEventListener("change", callback);
+      return () => mq.removeEventListener("change", callback);
+    },
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    () => false
+  );
+}
 
 interface SpotlightOverlayProps {
   targetId: string | null;
@@ -7,41 +19,36 @@ interface SpotlightOverlayProps {
 
 export function SpotlightOverlay({ targetId, visible }: SpotlightOverlayProps) {
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const reducedMotion = useReducedMotion();
 
-  useEffect(() => {
-    if (!targetId || !visible) {
-      setRect(null);
-      return;
-    }
-    const el = document.getElementById(targetId);
-    if (!el) return;
-    setRect(el.getBoundingClientRect());
-
-    const handleResize = () => {
-      const next = document.getElementById(targetId);
-      if (next) setRect(next.getBoundingClientRect());
+  useLayoutEffect(() => {
+    if (!targetId || !visible) return;
+    const measure = () => {
+      const el = document.getElementById(targetId);
+      setRect(el ? el.getBoundingClientRect() : null);
     };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    measure();
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, true);
+    return () => {
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", measure, true);
+    };
   }, [targetId, visible]);
 
   if (!visible || !rect) return null;
 
   const padding = 6;
-  const left = rect.left + window.scrollX - padding;
-  const top = rect.top + window.scrollY - padding;
+  const left = rect.left - padding;
+  const top = rect.top - padding;
   const width = rect.width + padding * 2;
   const height = rect.height + padding * 2;
 
   return (
-    <div className="fixed inset-0 z-40 pointer-events-none">
+    <div className="fixed inset-0 z-40 pointer-events-none" aria-hidden="true">
+      <div className="absolute inset-0 bg-slate-900/20" style={{ opacity: 1 }} />
       <div
-        className="absolute inset-0 bg-slate-900/20 transition-opacity duration-300"
-        style={{ opacity: visible ? 1 : 0 }}
-      />
-      <div
-        className="absolute rounded-lg animate-tremor"
+        className="absolute rounded-lg"
         style={{
           left,
           top,
@@ -49,7 +56,7 @@ export function SpotlightOverlay({ targetId, visible }: SpotlightOverlayProps) {
           height,
           boxShadow:
             "0 0 0 9999px rgba(15, 23, 42, 0.22), 0 0 0 3px #dd5e27, 0 8px 24px rgba(221, 94, 39, 0.25)",
-          animation: "tremor 0.35s ease-in-out",
+          animation: reducedMotion ? undefined : "tremor 0.35s ease-in-out",
         }}
       />
     </div>
