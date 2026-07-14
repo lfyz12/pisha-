@@ -1,28 +1,14 @@
 import {
-  createContext,
   ReactNode,
   useCallback,
   useEffect,
   useMemo,
   useState,
 } from "react";
-
-type OnboardingState = {
-  dismissed: string[];
-  hidden: string[];
-};
-
-type OnboardingContextValue = {
-  dismissed: string[];
-  hidden: string[];
-  dismiss: (key: string) => void;
-  hide: (key: string) => void;
-  reset: () => void;
-  isDismissed: (key: string) => boolean;
-  isHidden: (key: string) => boolean;
-};
-
-export const OnboardingContext = createContext<OnboardingContextValue | null>(null);
+import {
+  OnboardingContext,
+  type OnboardingState,
+} from "./onboarding-context";
 
 const STORAGE_KEY = "pisha-onboarding";
 
@@ -50,7 +36,7 @@ function writeStored(userId: string | undefined, state: OnboardingState) {
   }
 }
 
-export function OnboardingProvider({
+function OnboardingProviderInner({
   userId,
   children,
 }: {
@@ -59,12 +45,6 @@ export function OnboardingProvider({
 }) {
   const [dismissed, setDismissed] = useState<string[]>(() => readStored(userId).dismissed);
   const [hidden, setHidden] = useState<string[]>(() => readStored(userId).hidden);
-
-  useEffect(() => {
-    const stored = readStored(userId);
-    setDismissed(stored.dismissed);
-    setHidden(stored.hidden);
-  }, [userId]);
 
   useEffect(() => {
     writeStored(userId, { dismissed, hidden });
@@ -111,5 +91,19 @@ export function OnboardingProvider({
     <OnboardingContext.Provider value={value}>
       {children}
     </OnboardingContext.Provider>
+  );
+}
+
+export function OnboardingProvider({
+  userId,
+  children,
+}: {
+  userId: string | undefined;
+  children: ReactNode;
+}) {
+  return (
+    <OnboardingProviderInner key={userId} userId={userId}>
+      {children}
+    </OnboardingProviderInner>
   );
 }

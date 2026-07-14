@@ -1,5 +1,5 @@
-import { useCallback, useContext, useMemo } from "react";
-import { OnboardingContext } from "./onboarding-provider";
+import { useContext } from "react";
+import { OnboardingContext } from "./onboarding-context";
 
 export function useOnboarding() {
   const ctx = useContext(OnboardingContext);
