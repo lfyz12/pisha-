@@ -1,18 +1,7 @@
-import { forwardRef, useCallback, useRef, useSyncExternalStore, type PointerEvent } from "react";
+import { forwardRef, useCallback, useRef, type PointerEvent } from "react";
 import { cn } from "@/lib/utils";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { Button, type ButtonProps } from "./button";
-
-function useReducedMotion() {
-  return useSyncExternalStore(
-    (callback) => {
-      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-      mq.addEventListener("change", callback);
-      return () => mq.removeEventListener("change", callback);
-    },
-    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    () => false
-  );
-}
 
 export interface RippleButtonProps extends ButtonProps {
   rippleColor?: "white" | "black";

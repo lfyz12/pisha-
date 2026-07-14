@@ -1,16 +1,5 @@
-import { useLayoutEffect, useState, useSyncExternalStore } from "react";
-
-function useReducedMotion() {
-  return useSyncExternalStore(
-    (callback) => {
-      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-      mq.addEventListener("change", callback);
-      return () => mq.removeEventListener("change", callback);
-    },
-    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    () => false
-  );
-}
+import { useLayoutEffect, useState } from "react";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 interface SpotlightOverlayProps {
   targetId: string | null;

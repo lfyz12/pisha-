@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { GuideDot } from "./guide-dot";
 import { TourBubble } from "./tour-bubble";
 import type { TourStep } from "./onboarding-config";
@@ -12,21 +12,41 @@ interface TourControllerProps {
 export function TourController({ steps, originRect, onClose }: TourControllerProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const [previousTargetRect, setPreviousTargetRect] = useState<DOMRect | null>(null);
   const [dotKey, setDotKey] = useState(0);
 
   const step = steps[stepIndex];
 
-  const measureTarget = useCallback(() => {
-    const el = document.getElementById(step.targetId);
-    setTargetRect(el ? el.getBoundingClientRect() : null);
-  }, [step]);
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = document.getElementById(step.targetId);
+      if (el) {
+        setTargetRect(el.getBoundingClientRect());
+      } else if (stepIndex < steps.length - 1) {
+        setStepIndex((i) => i + 1);
+      }
+    };
 
-  useEffect(() => {
-    measureTarget();
-    const handleResize = () => measureTarget();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [measureTarget]);
+    let rafId: number | null = null;
+    const throttledMeasure = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        measure();
+      });
+    };
+
+    measure();
+    window.addEventListener("resize", throttledMeasure);
+    window.addEventListener("scroll", throttledMeasure, true);
+    return () => {
+      window.removeEventListener("resize", throttledMeasure);
+      window.removeEventListener("scroll", throttledMeasure, true);
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+    };
+  }, [step, stepIndex, steps.length]);
 
   const handleArrived = useCallback(() => {
     // bubble is shown automatically once targetRect exists
@@ -37,13 +57,14 @@ export function TourController({ steps, originRect, onClose }: TourControllerPro
       onClose();
       return;
     }
+    setPreviousTargetRect(targetRect);
     setStepIndex((i) => i + 1);
     setDotKey((k) => k + 1);
-  }, [stepIndex, steps.length, onClose]);
+  }, [stepIndex, steps.length, onClose, targetRect]);
 
   const fromRect = useMemo(
-    () => targetRect ?? originRect,
-    [targetRect, originRect]
+    () => (stepIndex === 0 ? originRect : (previousTargetRect ?? targetRect ?? originRect)),
+    [stepIndex, originRect, previousTargetRect, targetRect]
   );
 
   const bubbleRect = targetRect ?? originRect;
@@ -72,7 +93,7 @@ export function TourController({ steps, originRect, onClose }: TourControllerPro
       <div className="fixed inset-0 bg-slate-900/20 z-40 pointer-events-none" />
       <GuideDot
         key={dotKey}
-        fromRect={stepIndex === 0 ? originRect : fromRect}
+        fromRect={fromRect}
         toRect={targetRect}
         active
         onArrived={handleArrived}

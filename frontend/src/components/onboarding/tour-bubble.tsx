@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 interface TourBubbleProps {
   title: string;
   text: string;
@@ -8,17 +10,26 @@ interface TourBubbleProps {
 }
 
 export function TourBubble({ title, text, step, total, onNext, onSkip }: TourBubbleProps) {
+  const titleId = useId();
+  const descId = useId();
+
   return (
     <div
       className="fixed z-50 w-64 rounded-lg border border-border bg-card p-4 shadow-lg border-l-4 border-l-primary"
       role="dialog"
       aria-modal="false"
+      aria-labelledby={titleId}
+      aria-describedby={descId}
     >
-      <div className="text-xs text-muted-foreground mb-1">
+      <div aria-live="polite" className="text-xs text-muted-foreground mb-1">
         Шаг {step} из {total}
       </div>
-      <h4 className="font-semibold text-sm mb-2">{title}</h4>
-      <p className="text-sm text-muted-foreground leading-relaxed mb-4">{text}</p>
+      <h4 id={titleId} className="font-semibold text-sm mb-2">
+        {title}
+      </h4>
+      <p id={descId} className="text-sm text-muted-foreground leading-relaxed mb-4">
+        {text}
+      </p>
       <div className="flex justify-between items-center">
         <button
           type="button"

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 interface GuideDotProps {
   fromRect: DOMRect;
@@ -8,14 +9,22 @@ interface GuideDotProps {
 }
 
 export function GuideDot({ fromRect, toRect, active, onArrived }: GuideDotProps) {
-  const [phase, setPhase] = useState<"idle" | "flying" | "morphing" | "arrived">("idle");
+  const [phase, setPhase] = useState<"flying" | "morphing" | "arrived" | null>(null);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (!active) {
-      setPhase("idle");
+      setPhase(null);
+      return;
+    }
+    if (reducedMotion) {
+      setPhase("arrived");
+      onArrived();
       return;
     }
     setPhase("flying");
+    /* eslint-enable react-hooks/set-state-in-effect */
     const flyTimer = setTimeout(() => setPhase("morphing"), 700);
     const arriveTimer = setTimeout(() => {
       setPhase("arrived");
@@ -25,9 +34,9 @@ export function GuideDot({ fromRect, toRect, active, onArrived }: GuideDotProps)
       clearTimeout(flyTimer);
       clearTimeout(arriveTimer);
     };
-  }, [active, onArrived]);
+  }, [active, onArrived, reducedMotion]);
 
-  if (!active || phase === "idle") return null;
+  if (!active || !phase) return null;
 
   const fromX = fromRect.left + fromRect.width / 2;
   const fromY = fromRect.top + fromRect.height / 2;
@@ -54,7 +63,6 @@ export function GuideDot({ fromRect, toRect, active, onArrived }: GuideDotProps)
         boxShadow: isMorphing
           ? "0 8px 24px rgba(221, 94, 39, 0.25)"
           : "0 2px 14px rgba(221, 94, 39, 0.6)",
-        opacity: phase === "arrived" ? 1 : 1,
       }}
     />
   );
