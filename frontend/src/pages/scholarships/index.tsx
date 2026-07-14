@@ -104,7 +104,7 @@ export default function ScholarshipsPage() {
       ) : offers.length === 0 ? (
         <div className="text-center py-12 text-secondary text-sm">Нет доступных стипендий</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div id="scholarship-list" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {offers.map((offer) => {
             const isAvailable = studentScore >= offer.requiredScore;
             const progressPct = Math.min(

@@ -27,12 +27,26 @@ export function Sidebar({ isOpen, onClose, isMobile }: SidebarProps) {
   }, []);
 
   const navItems = [
-    { icon: "dashboard", label: "Обзор", path: "/dashboard" },
-    { icon: "leaderboard", label: "Таблица рейтинга", path: "/dashboard/rating" },
-    ...(isAdmin ? [{ icon: "group", label: "База студентов", path: "/dashboard/admin" }] : []),
-    { icon: "payments", label: "Мои стипендии", path: "/dashboard/scholarships" },
-    { icon: "analytics", label: "Аналитика", path: "/dashboard/analytics" },
-    { icon: "smart_toy", label: "ИИ-Помощник", path: "/dashboard/chat" },
+    { icon: "dashboard", label: "Обзор", path: "/dashboard", id: "nav-dashboard" },
+    { icon: "leaderboard", label: "Таблица рейтинга", path: "/dashboard/rating", id: "nav-rating" },
+    ...(isAdmin
+      ? [
+          {
+            icon: "group",
+            label: "База студентов",
+            path: "/dashboard/admin",
+            id: "nav-admin-import",
+          },
+        ]
+      : []),
+    {
+      icon: "payments",
+      label: "Мои стипендии",
+      path: "/dashboard/scholarships",
+      id: "nav-scholarships",
+    },
+    { icon: "analytics", label: "Аналитика", path: "/dashboard/analytics", id: "nav-analytics" },
+    { icon: "smart_toy", label: "ИИ-Помощник", path: "/dashboard/chat", id: "nav-chat" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -68,6 +82,7 @@ export function Sidebar({ isOpen, onClose, isMobile }: SidebarProps) {
           return (
             <button
               key={item.label}
+              id={item.id}
               onClick={() => handleNav(item.path)}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 text-left",
@@ -100,6 +115,7 @@ export function Sidebar({ isOpen, onClose, isMobile }: SidebarProps) {
           </div>
         </button>
         <button
+          id="nav-profile"
           onClick={() => handleNav("/dashboard/profile")}
           className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-secondary hover:text-text-main hover:bg-surface-container-low rounded-lg transition-all text-left"
         >

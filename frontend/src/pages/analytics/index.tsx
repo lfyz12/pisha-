@@ -138,7 +138,10 @@ export default function AnalyticsPage() {
       )}
 
       {metricsList.length > 0 && (
-        <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <section
+          id="metrics-cards"
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
+        >
           {metricsList.map((metric, i) => (
             <MetricCard key={i} {...metric} />
           ))}
@@ -147,7 +150,9 @@ export default function AnalyticsPage() {
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <BarChartSection />
-        <LineChartSection />
+        <div id="attendance-chart">
+          <LineChartSection />
+        </div>
       </section>
 
       {ratingStudents.length > 0 && (

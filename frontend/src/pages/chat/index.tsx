@@ -142,28 +142,30 @@ export default function ChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-border-subtle pt-3">
-        <div className="flex items-end gap-2">
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Задайте вопрос..."
-            rows={1}
-            className="flex-1 bg-surface-container-high border border-border-subtle rounded-xl px-4 py-3 text-sm text-text-main resize-none focus:outline-none focus:border-primary transition-colors max-h-32 placeholder:text-secondary"
-          />
-          <button
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isLoading}
-            className="w-10 h-10 bg-primary text-on-primary rounded-xl flex items-center justify-center shrink-0 hover:opacity-90 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <Icon name="send" className="text-xl" />
-          </button>
+      <div id="chat-input">
+        <div className="border-t border-border-subtle pt-3">
+          <div className="flex items-end gap-2">
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Задайте вопрос..."
+              rows={1}
+              className="flex-1 bg-surface-container-high border border-border-subtle rounded-xl px-4 py-3 text-sm text-text-main resize-none focus:outline-none focus:border-primary transition-colors max-h-32 placeholder:text-secondary"
+            />
+            <button
+              onClick={() => handleSend()}
+              disabled={!input.trim() || isLoading}
+              className="w-10 h-10 bg-primary text-on-primary rounded-xl flex items-center justify-center shrink-0 hover:opacity-90 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Icon name="send" className="text-xl" />
+            </button>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
+            Enter — отправить, Shift+Enter — перенос строки
+          </p>
         </div>
-        <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
-          Enter — отправить, Shift+Enter — перенос строки
-        </p>
       </div>
     </div>
   );

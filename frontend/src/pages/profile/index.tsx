@@ -272,6 +272,7 @@ export default function ProfilePage() {
               )}
 
               <button
+                id="change-password-button"
                 type="submit"
                 className="px-6 py-3 bg-primary text-on-primary text-base font-bold rounded-lg hover:opacity-90 active:scale-[0.99] transition-all"
               >

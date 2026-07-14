@@ -91,6 +91,7 @@ export default function RatingPage() {
               className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-sm"
             />
             <input
+              id="student-search"
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -98,7 +99,10 @@ export default function RatingPage() {
               className="w-full pl-8 pr-3 py-1.5 bg-surface-container-low border border-border-subtle rounded-lg text-xs focus:outline-none focus:border-primary transition-colors"
             />
           </div>
-          <div className="flex bg-surface-container-low p-1 rounded-lg border border-border-subtle overflow-x-auto">
+          <div
+            id="course-filter"
+            className="flex bg-surface-container-low p-1 rounded-lg border border-border-subtle overflow-x-auto"
+          >
             {courses.map((course) => (
               <button
                 key={course}

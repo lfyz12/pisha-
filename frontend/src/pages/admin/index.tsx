@@ -57,6 +57,7 @@ export default function AdminPage() {
           )}
 
           <button
+            id="excel-uploader"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadExcel.isPending}
             className="w-full bg-primary text-on-primary font-bold py-2.5 rounded-lg text-sm hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
@@ -66,7 +67,10 @@ export default function AdminPage() {
           </button>
 
           {summary && (
-            <div className="bg-primary-fixed/20 text-primary text-sm px-4 py-3 rounded-lg flex items-center gap-2">
+            <div
+              id="credential-bundle"
+              className="bg-primary-fixed/20 text-primary text-sm px-4 py-3 rounded-lg flex items-center gap-2"
+            >
               <Icon name="check_circle" fill />
               Импортировано {summary.studentsImported} студентов
               {summary.eventsImported > 0 && ` и ${summary.eventsImported} мероприятий`}
