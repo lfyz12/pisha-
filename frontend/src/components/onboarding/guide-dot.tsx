@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 interface GuideDotProps {
@@ -9,34 +9,15 @@ interface GuideDotProps {
 }
 
 export function GuideDot({ fromRect, toRect, active, onArrived }: GuideDotProps) {
-  const [phase, setPhase] = useState<"flying" | "morphing" | "arrived" | null>(null);
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect */
-    if (!active) {
-      setPhase(null);
-      return;
-    }
-    if (reducedMotion) {
-      setPhase("arrived");
+    if (active && reducedMotion) {
       onArrived();
-      return;
     }
-    setPhase("flying");
-    /* eslint-enable react-hooks/set-state-in-effect */
-    const flyTimer = setTimeout(() => setPhase("morphing"), 700);
-    const arriveTimer = setTimeout(() => {
-      setPhase("arrived");
-      onArrived();
-    }, 1000);
-    return () => {
-      clearTimeout(flyTimer);
-      clearTimeout(arriveTimer);
-    };
-  }, [active, onArrived, reducedMotion]);
+  }, [active, reducedMotion, onArrived]);
 
-  if (!active || !phase) return null;
+  if (!active) return null;
 
   const fromX = fromRect.left + fromRect.width / 2;
   const fromY = fromRect.top + fromRect.height / 2;
@@ -45,25 +26,69 @@ export function GuideDot({ fromRect, toRect, active, onArrived }: GuideDotProps)
   const targetWidth = toRect.width + 12;
   const targetHeight = toRect.height + 12;
 
-  const isMorphing = phase === "morphing" || phase === "arrived";
+  const style: React.CSSProperties & { [key: `--${string}`]: string } = {
+    left: reducedMotion ? toX : fromX,
+    top: reducedMotion ? toY : fromY,
+    transform: "translate(-50%, -50%)",
+    width: reducedMotion ? targetWidth : 14,
+    height: reducedMotion ? targetHeight : 14,
+    borderRadius: reducedMotion ? 10 : "50%",
+    backgroundColor: reducedMotion ? "transparent" : "#dd5e27",
+    borderStyle: "solid",
+    borderColor: "#dd5e27",
+    borderWidth: reducedMotion ? 3 : 0,
+    boxShadow: reducedMotion
+      ? "0 8px 24px rgba(221, 94, 39, 0.25)"
+      : "0 2px 14px rgba(221, 94, 39, 0.6)",
+    "--from-x": `${fromX}px`,
+    "--from-y": `${fromY}px`,
+    "--to-x": `${toX}px`,
+    "--to-y": `${toY}px`,
+    "--target-w": `${targetWidth}px`,
+    "--target-h": `${targetHeight}px`,
+  };
+
+  if (!reducedMotion) {
+    style.animation = "guide-dot-fly 1000ms cubic-bezier(0.4, 0, 0.2, 1) forwards";
+  }
 
   return (
-    <div
-      className="fixed z-50 pointer-events-none"
-      style={{
-        left: isMorphing ? toX : fromX,
-        top: isMorphing ? toY : fromY,
-        transform: "translate(-50%, -50%)",
-        transition: "all 700ms cubic-bezier(0.4, 0, 0.2, 1)",
-        width: isMorphing ? targetWidth : 14,
-        height: isMorphing ? targetHeight : 14,
-        borderRadius: isMorphing ? 10 : "50%",
-        backgroundColor: isMorphing ? "transparent" : "#dd5e27",
-        border: isMorphing ? "3px solid #dd5e27" : "0px solid #dd5e27",
-        boxShadow: isMorphing
-          ? "0 8px 24px rgba(221, 94, 39, 0.25)"
-          : "0 2px 14px rgba(221, 94, 39, 0.6)",
-      }}
-    />
+    <>
+      <style>{`
+        @keyframes guide-dot-fly {
+          0% {
+            left: var(--from-x);
+            top: var(--from-y);
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #dd5e27;
+            border-width: 0;
+            box-shadow: 0 2px 14px rgba(221, 94, 39, 0.6);
+          }
+          70% {
+            left: var(--to-x);
+            top: var(--to-y);
+            width: var(--target-w);
+            height: var(--target-h);
+            border-radius: 10px;
+            background-color: transparent;
+            border-width: 3px;
+            box-shadow: 0 8px 24px rgba(221, 94, 39, 0.25);
+          }
+          100% {
+            left: var(--to-x);
+            top: var(--to-y);
+            width: var(--target-w);
+            height: var(--target-h);
+            border-radius: 10px;
+            background-color: transparent;
+            border-width: 3px;
+            box-shadow: 0 8px 24px rgba(221, 94, 39, 0.25);
+          }
+        }
+      `}</style>
+      <div className="fixed z-50 pointer-events-none" style={style} onAnimationEnd={onArrived} />
+    </>
   );
 }

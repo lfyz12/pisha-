@@ -17,36 +17,48 @@ export function TourController({ steps, originRect, onClose }: TourControllerPro
 
   const step = steps[stepIndex];
 
+  // Find the target for the current step and advance only when the step changes.
   useLayoutEffect(() => {
-    const measure = () => {
-      const el = document.getElementById(step.targetId);
-      if (el) {
-        setTargetRect(el.getBoundingClientRect());
-      } else if (stepIndex < steps.length - 1) {
-        setStepIndex((i) => i + 1);
-      }
+    const el = document.getElementById(step.targetId);
+    if (el) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTargetRect(el.getBoundingClientRect());
+      return;
+    }
+    if (stepIndex < steps.length - 1) {
+      setStepIndex((i) => i + 1);
+    } else {
+      setTargetRect(originRect);
+    }
+  }, [step.targetId, stepIndex, steps.length, originRect]);
+
+  // Re-measure the existing target on scroll/resize without skipping steps.
+  useEffect(() => {
+    if (!targetRect) return;
+
+    const targetId = step.targetId;
+    const remeasure = () => {
+      const el = document.getElementById(targetId);
+      if (el) setTargetRect(el.getBoundingClientRect());
     };
 
     let rafId: number | null = null;
-    const throttledMeasure = () => {
+    const handler = () => {
       if (rafId !== null) return;
       rafId = requestAnimationFrame(() => {
         rafId = null;
-        measure();
+        remeasure();
       });
     };
 
-    measure();
-    window.addEventListener("resize", throttledMeasure);
-    window.addEventListener("scroll", throttledMeasure, true);
+    window.addEventListener("resize", handler);
+    window.addEventListener("scroll", handler, true);
     return () => {
-      window.removeEventListener("resize", throttledMeasure);
-      window.removeEventListener("scroll", throttledMeasure, true);
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId);
-      }
+      window.removeEventListener("resize", handler);
+      window.removeEventListener("scroll", handler, true);
+      if (rafId !== null) cancelAnimationFrame(rafId);
     };
-  }, [step, stepIndex, steps.length]);
+  }, [step.targetId, targetRect]);
 
   const handleArrived = useCallback(() => {
     // bubble is shown automatically once targetRect exists
