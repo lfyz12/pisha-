@@ -63,34 +63,13 @@ export const studentHints: Hint[] = [
 
 export const adminHints: Hint[] = [
   {
-    pageKey: "admin-import",
+    pageKey: "admin",
     title: "Импорт данных",
-    text: "Загружай рейтинг и мероприятия через Excel. После загрузки система создаст временные учётные данные.",
+    text: "Загружай рейтинг и мероприятия через Excel. После загрузки система покажет сводку по импортированным данным.",
     anchors: [
       { word: "Excel", targetId: "excel-uploader" },
-      { word: "учётные данные", targetId: "credential-bundle" },
+      { word: "сводку", targetId: "credential-bundle" },
     ],
-  },
-  {
-    pageKey: "admin-policies",
-    title: "Политики доступа",
-    text: "Настраивай, какие данные видят студенты: имена в рейтинге, профили, посещаемость.",
-    anchors: [{ word: "видят студенты", targetId: "policy-toggles" }],
-  },
-  {
-    pageKey: "admin-scoring",
-    title: "Начисление баллов",
-    text: "Выбери студентов и начисли баллы за научную, спортивную или общественную активность.",
-    anchors: [
-      { word: "студентов", targetId: "student-table" },
-      { word: "начисли", targetId: "scoring-form" },
-    ],
-  },
-  {
-    pageKey: "admin-ai-rules",
-    title: "ИИ-правила",
-    text: "Создавай правила, по которым ИИ-ассистент отвечает на вопросы студентов.",
-    anchors: [{ word: "правила", targetId: "ai-rules-list" }],
   },
 ];
 
@@ -115,14 +94,11 @@ export const appTourSteps: Record<"student" | "admin", TourStep[]> = {
     { targetId: "nav-profile", title: "Профиль", text: "Контакты и смена пароля." },
   ],
   admin: [
-    { targetId: "nav-admin-import", title: "Импорт", text: "Загрузка данных из Excel." },
-    { targetId: "nav-admin-policies", title: "Политики", text: "Управление видимостью данных." },
     {
-      targetId: "nav-admin-scoring",
-      title: "Начисление",
-      text: "Начисление баллов за активность.",
+      targetId: "nav-admin-import",
+      title: "База студентов",
+      text: "Управление данными и импорт из Excel.",
     },
-    { targetId: "nav-admin-ai-rules", title: "ИИ-правила", text: "Правила для ИИ-ассистента." },
   ],
 };
 

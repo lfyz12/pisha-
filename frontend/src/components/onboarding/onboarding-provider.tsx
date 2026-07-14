@@ -44,6 +44,14 @@ function OnboardingProviderInner({
   const [hidden, setHidden] = useState<string[]>(() => readStored(userId).hidden);
 
   useEffect(() => {
+    // Re-read per-user onboarding state from localStorage when the user changes.
+    const stored = readStored(userId);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDismissed(stored.dismissed);
+    setHidden(stored.hidden);
+  }, [userId]);
+
+  useEffect(() => {
     writeStored(userId, { dismissed, hidden });
   }, [userId, dismissed, hidden]);
 
@@ -88,9 +96,5 @@ export function OnboardingProvider({
   userId: string | undefined;
   children: ReactNode;
 }) {
-  return (
-    <OnboardingProviderInner key={userId} userId={userId}>
-      {children}
-    </OnboardingProviderInner>
-  );
+  return <OnboardingProviderInner userId={userId}>{children}</OnboardingProviderInner>;
 }

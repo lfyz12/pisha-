@@ -5,6 +5,7 @@ import { AdminOnly } from "@/components/admin-only";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { PageOnboarding } from "@/components/onboarding/page-onboarding";
 import { useAuthStore } from "@/stores";
 export default function DashboardLayout() {
   const location = useLocation();
@@ -55,6 +56,7 @@ export default function DashboardLayout() {
           <Icon name="add" fill className="text-on-primary" />
         </button>
       </AdminOnly>
+      <PageOnboarding />
     </div>
   );
 }
