@@ -1,6 +1,6 @@
 import type { Table } from "@tanstack/react-table";
 import { Settings2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { RippleButton } from "@/components/ui/ripple-button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -18,10 +18,10 @@ export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="ml-auto hidden h-8 lg:flex">
+        <RippleButton variant="outline" size="sm" className="ml-auto hidden h-8 lg:flex">
           <Settings2 className="mr-2 h-4 w-4" />
           Columns
-        </Button>
+        </RippleButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[150px]">
         <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>

@@ -1,6 +1,6 @@
 import type { Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { Input } from "@/components/ui/input";
 import { DataTableViewOptions } from "./data-table-column-visibility";
 
@@ -30,14 +30,14 @@ export function DataTableToolbar<TData>({
           className="h-8 w-[150px] lg:w-[250px]"
         />
         {isFiltered && (
-          <Button
+          <RippleButton
             variant="ghost"
             onClick={() => table.resetColumnFilters()}
             className="h-8 px-2 lg:px-3"
           >
             Reset
             <X className="ml-2 h-4 w-4" />
-          </Button>
+          </RippleButton>
         )}
       </div>
       <DataTableViewOptions table={table} />
