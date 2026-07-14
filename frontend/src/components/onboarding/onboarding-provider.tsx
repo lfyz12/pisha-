@@ -1,4 +1,10 @@
-import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { OnboardingContext, type OnboardingState } from "./onboarding-context";
 
 const STORAGE_KEY = "pisha-onboarding";
