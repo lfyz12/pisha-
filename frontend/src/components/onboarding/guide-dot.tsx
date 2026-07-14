@@ -53,42 +53,6 @@ export function GuideDot({ fromRect, toRect, active, onArrived }: GuideDotProps)
   }
 
   return (
-    <>
-      <style>{`
-        @keyframes guide-dot-fly {
-          0% {
-            left: var(--from-x);
-            top: var(--from-y);
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background-color: #dd5e27;
-            border-width: 0;
-            box-shadow: 0 2px 14px rgba(221, 94, 39, 0.6);
-          }
-          70% {
-            left: var(--to-x);
-            top: var(--to-y);
-            width: var(--target-w);
-            height: var(--target-h);
-            border-radius: 10px;
-            background-color: transparent;
-            border-width: 3px;
-            box-shadow: 0 8px 24px rgba(221, 94, 39, 0.25);
-          }
-          100% {
-            left: var(--to-x);
-            top: var(--to-y);
-            width: var(--target-w);
-            height: var(--target-h);
-            border-radius: 10px;
-            background-color: transparent;
-            border-width: 3px;
-            box-shadow: 0 8px 24px rgba(221, 94, 39, 0.25);
-          }
-        }
-      `}</style>
-      <div className="fixed z-50 pointer-events-none" style={style} onAnimationEnd={onArrived} />
-    </>
+    <div className="fixed z-50 pointer-events-none" style={style} onAnimationEnd={onArrived} />
   );
 }

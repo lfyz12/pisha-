@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { GuideDot } from "./guide-dot";
 import { TourBubble } from "./tour-bubble";
 import type { TourStep } from "./onboarding-config";
@@ -17,6 +17,12 @@ export function TourController({ steps, originRect, onClose }: TourControllerPro
 
   const step = steps[stepIndex];
 
+  // Hold the latest originRect in a ref so a new DOMRect object from the parent
+  // does not restart the layout effect or recompute derived rects.
+  const originRectRef = useRef(originRect);
+  // eslint-disable-next-line react-hooks/refs
+  originRectRef.current = originRect;
+
   // Find the target for the current step and advance only when the step changes.
   useLayoutEffect(() => {
     const el = document.getElementById(step.targetId);
@@ -28,9 +34,11 @@ export function TourController({ steps, originRect, onClose }: TourControllerPro
     if (stepIndex < steps.length - 1) {
       setStepIndex((i) => i + 1);
     } else {
-      setTargetRect(originRect);
+      setTargetRect(originRectRef.current);
     }
-  }, [step.targetId, stepIndex, steps.length, originRect]);
+    // originRect is intentionally omitted: it is read from originRectRef to avoid
+    // re-running when the parent passes a new DOMRect object each render.
+  }, [step.targetId, stepIndex, steps.length]);
 
   // Re-measure the existing target on scroll/resize without skipping steps.
   useEffect(() => {
@@ -74,12 +82,19 @@ export function TourController({ steps, originRect, onClose }: TourControllerPro
     setDotKey((k) => k + 1);
   }, [stepIndex, steps.length, onClose, targetRect]);
 
+  /* eslint-disable react-hooks/refs */
   const fromRect = useMemo(
-    () => (stepIndex === 0 ? originRect : (previousTargetRect ?? targetRect ?? originRect)),
-    [stepIndex, originRect, previousTargetRect, targetRect]
+    () =>
+      stepIndex === 0
+        ? originRectRef.current
+        : (previousTargetRect ?? targetRect ?? originRectRef.current),
+    // originRect is read from the ref to avoid recomputing on every parent render.
+    [stepIndex, previousTargetRect, targetRect]
   );
+  /* eslint-enable react-hooks/refs */
 
-  const bubbleRect = targetRect ?? originRect;
+  // eslint-disable-next-line react-hooks/refs
+  const bubbleRect = targetRect ?? originRectRef.current;
   const bubbleStyle: React.CSSProperties = {
     left: bubbleRect.left + bubbleRect.width + 16,
     top: bubbleRect.top,
