@@ -63,10 +63,7 @@ export function HintReopenButton({
         <Icon name="help" />
       </button>
       {open && (
-        <div
-          role="menu"
-          className="absolute bottom-14 left-0 w-56 rounded-lg border border-border bg-card shadow-lg p-2"
-        >
+        <div className="absolute bottom-14 left-0 w-56 rounded-lg border border-border bg-card shadow-lg p-2">
           {hints.length > 0 && (
             <>
               <div className="text-xs font-semibold text-muted-foreground px-2 py-1.5 uppercase tracking-wide">
@@ -81,7 +78,6 @@ export function HintReopenButton({
                     setOpen(false);
                   }}
                   className="w-full text-left text-sm px-2 py-1.5 rounded-md hover:bg-accent"
-                  role="menuitem"
                 >
                   {h.title}
                 </button>
@@ -102,7 +98,6 @@ export function HintReopenButton({
                     setOpen(false);
                   }}
                   className="w-full text-left text-sm px-2 py-1.5 rounded-md hover:bg-accent"
-                  role="menuitem"
                 >
                   {t.label}
                 </button>
