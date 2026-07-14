@@ -1,4 +1,4 @@
-import { useRef, type PointerEvent } from "react";
+import { forwardRef, useRef, type PointerEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Button, type ButtonProps } from "./button";
 
@@ -6,48 +6,77 @@ export interface RippleButtonProps extends ButtonProps {
   rippleColor?: "white" | "black";
 }
 
-export function RippleButton({
-  className,
-  onPointerDown,
-  rippleColor = "white",
-  children,
-  ...props
-}: RippleButtonProps) {
-  const buttonRef = useRef<HTMLButtonElement>(null);
+export const RippleButton = forwardRef<HTMLButtonElement, RippleButtonProps>(
+  function RippleButton(
+    {
+      className,
+      onPointerDown,
+      rippleColor = "white",
+      children,
+      ...props
+    },
+    forwardedRef
+  ) {
+    const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
-    const button = buttonRef.current;
-    if (!button) return;
+    const setRefs = (node: HTMLButtonElement | null) => {
+      buttonRef.current = node;
+      if (typeof forwardedRef === "function") {
+        forwardedRef(node);
+      } else if (forwardedRef) {
+        forwardedRef.current = node;
+      }
+    };
 
-    const rect = button.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    const size = Math.max(rect.width, rect.height) * 2;
+    const reducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const span = document.createElement("span");
-    span.className = "pointer-events-none absolute rounded-full animate-ripple";
-    span.style.width = `${size}px`;
-    span.style.height = `${size}px`;
-    span.style.left = `${x - size / 2}px`;
-    span.style.top = `${y - size / 2}px`;
-    span.style.backgroundColor =
-      rippleColor === "white" ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.1)";
-    span.style.animation = "ripple-grow 500ms cubic-bezier(0.4, 0, 0.2, 1) forwards";
+    const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+      if (reducedMotion) {
+        onPointerDown?.(event);
+        return;
+      }
 
-    button.appendChild(span);
-    span.addEventListener("animationend", () => span.remove(), { once: true });
+      const button = buttonRef.current;
+      if (!button) return;
 
-    onPointerDown?.(event);
-  };
+      const rect = button.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const size = Math.max(rect.width, rect.height) * 2;
 
-  return (
-    <Button
-      ref={buttonRef}
-      className={cn("relative overflow-hidden", className)}
-      onPointerDown={handlePointerDown}
-      {...props}
-    >
-      {children}
-    </Button>
-  );
-}
+      const span = document.createElement("span");
+      span.className = "pointer-events-none absolute rounded-full";
+      span.style.width = `${size}px`;
+      span.style.height = `${size}px`;
+      span.style.left = `${x - size / 2}px`;
+      span.style.top = `${y - size / 2}px`;
+      span.style.backgroundColor =
+        rippleColor === "white"
+          ? "rgba(255,255,255,0.25)"
+          : "rgba(0,0,0,0.1)";
+      span.style.animation =
+        "ripple-grow 500ms cubic-bezier(0.4, 0, 0.2, 1) forwards";
+
+      button.appendChild(span);
+      const cleanup = () => span.remove();
+      span.addEventListener("animationend", cleanup, { once: true });
+
+      onPointerDown?.(event);
+    };
+
+    return (
+      <Button
+        ref={setRefs}
+        className={cn("relative overflow-hidden", className)}
+        onPointerDown={handlePointerDown}
+        {...props}
+      >
+        {children}
+      </Button>
+    );
+  }
+);
+
+RippleButton.displayName = "RippleButton";

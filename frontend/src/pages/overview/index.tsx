@@ -517,7 +517,7 @@ export default function OverviewPage() {
                     </p>
                   </div>
                 </div>
-                <RippleButton className="rounded-lg px-3 py-1.5 text-xs font-bold">
+                <RippleButton className="bg-primary text-on-primary hover:opacity-90 transition-opacity rounded-lg px-3 py-1.5 text-xs font-bold">
                   Подать заявку
                 </RippleButton>
               </div>
