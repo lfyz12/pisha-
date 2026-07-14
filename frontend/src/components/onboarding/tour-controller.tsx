@@ -3,6 +3,9 @@ import { GuideDot } from "./guide-dot";
 import { TourBubble } from "./tour-bubble";
 import type { TourStep } from "./onboarding-config";
 
+const BUBBLE_WIDTH = 256;
+const BUBBLE_GAP = 16;
+
 interface TourControllerProps {
   steps: TourStep[];
   originRect: DOMRect;
@@ -14,6 +17,7 @@ export function TourController({ steps, originRect, onClose }: TourControllerPro
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [previousTargetRect, setPreviousTargetRect] = useState<DOMRect | null>(null);
   const [dotKey, setDotKey] = useState(0);
+  const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth);
 
   const step = steps[stepIndex];
 
@@ -68,8 +72,10 @@ export function TourController({ steps, originRect, onClose }: TourControllerPro
     };
   }, [step.targetId, targetRect]);
 
-  const handleArrived = useCallback(() => {
-    // bubble is shown automatically once targetRect exists
+  useEffect(() => {
+    const handleResize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const handleNext = useCallback(() => {
@@ -95,15 +101,19 @@ export function TourController({ steps, originRect, onClose }: TourControllerPro
 
   // eslint-disable-next-line react-hooks/refs
   const bubbleRect = targetRect ?? originRectRef.current;
-  const bubbleStyle: React.CSSProperties = {
-    left: bubbleRect.left + bubbleRect.width + 16,
-    top: bubbleRect.top,
-  };
+  const bubbleStyle: React.CSSProperties = useMemo(() => {
+    const style: React.CSSProperties = {
+      left: bubbleRect.left + bubbleRect.width + BUBBLE_GAP,
+      top: bubbleRect.top,
+    };
 
-  // keep bubble on screen if it overflows right
-  if (bubbleRect.left + bubbleRect.width + 16 + 256 > window.innerWidth) {
-    bubbleStyle.left = bubbleRect.left - 16 - 256;
-  }
+    // keep bubble on screen if it overflows right
+    if (bubbleRect.left + bubbleRect.width + BUBBLE_GAP + BUBBLE_WIDTH > viewportWidth) {
+      style.left = bubbleRect.left - BUBBLE_GAP - BUBBLE_WIDTH;
+    }
+
+    return style;
+  }, [bubbleRect, viewportWidth]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -118,13 +128,7 @@ export function TourController({ steps, originRect, onClose }: TourControllerPro
   return (
     <>
       <div className="fixed inset-0 bg-slate-900/20 z-40 pointer-events-none" />
-      <GuideDot
-        key={dotKey}
-        fromRect={fromRect}
-        toRect={targetRect}
-        active
-        onArrived={handleArrived}
-      />
+      <GuideDot key={dotKey} fromRect={fromRect} toRect={targetRect} active />
       <div className="fixed z-50" style={bubbleStyle}>
         <TourBubble
           title={step.title}

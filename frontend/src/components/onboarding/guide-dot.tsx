@@ -5,7 +5,7 @@ interface GuideDotProps {
   fromRect: DOMRect;
   toRect: DOMRect;
   active: boolean;
-  onArrived: () => void;
+  onArrived?: () => void;
 }
 
 export function GuideDot({ fromRect, toRect, active, onArrived }: GuideDotProps) {
@@ -13,7 +13,7 @@ export function GuideDot({ fromRect, toRect, active, onArrived }: GuideDotProps)
 
   useEffect(() => {
     if (active && reducedMotion) {
-      onArrived();
+      onArrived?.();
     }
   }, [active, reducedMotion, onArrived]);
 
@@ -32,7 +32,7 @@ export function GuideDot({ fromRect, toRect, active, onArrived }: GuideDotProps)
     transform: "translate(-50%, -50%)",
     width: reducedMotion ? targetWidth : 14,
     height: reducedMotion ? targetHeight : 14,
-    borderRadius: reducedMotion ? 10 : "50%",
+    borderRadius: reducedMotion ? "10px" : "50%",
     backgroundColor: reducedMotion ? "transparent" : "#dd5e27",
     borderStyle: "solid",
     borderColor: "#dd5e27",
@@ -53,6 +53,10 @@ export function GuideDot({ fromRect, toRect, active, onArrived }: GuideDotProps)
   }
 
   return (
-    <div className="fixed z-50 pointer-events-none" style={style} onAnimationEnd={onArrived} />
+    <div
+      className="fixed z-50 pointer-events-none"
+      style={style}
+      onAnimationEnd={() => onArrived?.()}
+    />
   );
 }
