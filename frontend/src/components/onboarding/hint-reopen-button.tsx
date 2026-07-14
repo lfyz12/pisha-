@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 import type { Hint, Tour } from "./onboarding-config";
@@ -21,6 +21,30 @@ export function HintReopenButton({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (!open) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
   if (!hasHidden && hints.length === 0 && tours.length === 0) return null;
 
   return (
@@ -32,12 +56,17 @@ export function HintReopenButton({
           "w-11 h-11 rounded-full bg-card border border-border shadow-md",
           "flex items-center justify-center text-primary hover:bg-accent transition-colors"
         )}
-        aria-label="Показать подсказки"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label={open ? "Закрыть меню подсказок" : "Показать подсказки"}
       >
         <Icon name="help" />
       </button>
       {open && (
-        <div className="absolute bottom-14 left-0 w-56 rounded-lg border border-border bg-card shadow-lg p-2">
+        <div
+          role="menu"
+          className="absolute bottom-14 left-0 w-56 rounded-lg border border-border bg-card shadow-lg p-2"
+        >
           {hints.length > 0 && (
             <>
               <div className="text-xs font-semibold text-muted-foreground px-2 py-1.5 uppercase tracking-wide">
@@ -52,6 +81,7 @@ export function HintReopenButton({
                     setOpen(false);
                   }}
                   className="w-full text-left text-sm px-2 py-1.5 rounded-md hover:bg-accent"
+                  role="menuitem"
                 >
                   {h.title}
                 </button>
@@ -72,6 +102,7 @@ export function HintReopenButton({
                     setOpen(false);
                   }}
                   className="w-full text-left text-sm px-2 py-1.5 rounded-md hover:bg-accent"
+                  role="menuitem"
                 >
                   {t.label}
                 </button>
