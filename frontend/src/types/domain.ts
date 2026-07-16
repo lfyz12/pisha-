@@ -160,4 +160,5 @@ export interface UserAccount {
 export interface ImportSummary {
   studentsImported: number;
   eventsImported: number;
+  credentialBundleId?: string;
 }

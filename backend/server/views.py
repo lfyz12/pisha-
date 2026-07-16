@@ -1,12 +1,13 @@
 import random
 
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from users.permissions import FullyAuthenticated
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([FullyAuthenticated])
 def server_metrics_view(request):
     data = {
         "cpuLoad": round(random.uniform(20, 60), 1),

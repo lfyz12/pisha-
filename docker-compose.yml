@@ -5,11 +5,9 @@ services:
     environment:
       - POSTGRES_DB=pisha_db
       - POSTGRES_USER=pisha
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-pisha_password}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
     volumes:
       - pisha-postgres-data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     networks:
       - pisha-network
     healthcheck:
@@ -22,17 +20,17 @@ services:
     build: ./backend
     container_name: pisha-backend
     environment:
-      - SECRET_KEY=${SECRET_KEY:-django-insecure-dev-key}
-      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY must be set}
+      - DEBUG=${DEBUG:-False}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:?ALLOWED_HOSTS must be set}
       - POSTGRES_DB=pisha_db
       - POSTGRES_USER=pisha
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-pisha_password}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost}
-      - DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:-1234}
-    ports:
-      - "8000:8000"
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:?CORS_ALLOWED_ORIGINS must be set}
+      - DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:?DEFAULT_ADMIN_PASSWORD must be set}
+      - FIELD_ENCRYPTION_KEY=${FIELD_ENCRYPTION_KEY:?FIELD_ENCRYPTION_KEY must be set}
     depends_on:
       db:
         condition: service_healthy

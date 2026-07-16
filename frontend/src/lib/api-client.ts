@@ -3,6 +3,7 @@ import { config } from "@/config";
 
 export const apiClient = axios.create({
   baseURL: config.api.baseUrl,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -10,9 +11,14 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("auth-token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (!["get", "head", "options"].includes(config.method?.toLowerCase() ?? "get")) {
+      const csrfToken = document.cookie
+        .split("; ")
+        .find((cookie) => cookie.startsWith("csrftoken="))
+        ?.split("=")[1];
+      if (csrfToken) {
+        config.headers["X-CSRFToken"] = decodeURIComponent(csrfToken);
+      }
     }
     return config;
   },
@@ -23,7 +29,6 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("auth-token");
       window.location.href = "/auth/login";
     }
     return Promise.reject(error);

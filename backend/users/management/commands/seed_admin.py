@@ -2,6 +2,7 @@ import os
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
+from django.core.management.base import CommandError
 
 User = get_user_model()
 
@@ -11,7 +12,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if not User.objects.filter(username="admin").exists():
-            password = os.environ.get("DEFAULT_ADMIN_PASSWORD", "1234")
+            password = os.environ.get("DEFAULT_ADMIN_PASSWORD")
+            if not password:
+                raise CommandError("DEFAULT_ADMIN_PASSWORD must be set to create the initial admin")
             User.objects.create_superuser(
                 username="admin",
                 password=password,

@@ -2,6 +2,7 @@ import io
 
 import openpyxl
 from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from import_export.parsers import (
     ExcelStudentRaw,
@@ -9,6 +10,7 @@ from import_export.parsers import (
     parse_flat_excel_buffer,
     parse_rating_excel_buffer,
 )
+from import_export.views import _validate_xlsx
 
 
 class ParserSmokeTests(TestCase):
@@ -60,3 +62,8 @@ class ParserSmokeTests(TestCase):
         result = has_multi_level_header(buffer.getvalue())
 
         self.assertTrue(result)
+
+    def test_rejects_non_xlsx_upload(self):
+        upload = SimpleUploadedFile("rating.xls", b"not-an-xlsx")
+        with self.assertRaisesMessage(ValueError, "Only .xlsx"):
+            _validate_xlsx(upload, b"not-an-xlsx", "auto")

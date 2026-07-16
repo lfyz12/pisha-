@@ -4,6 +4,7 @@ import { apiClient } from "@/lib/api-client";
 interface ImportSummaryRaw {
   students_imported: number;
   events_imported: number;
+  credential_bundle_id?: string;
 }
 
 export async function uploadExcel(
@@ -27,6 +28,7 @@ export async function uploadExcel(
     data: {
       studentsImported: data.data.students_imported,
       eventsImported: data.data.events_imported,
+      credentialBundleId: data.data.credential_bundle_id,
     },
   };
 }

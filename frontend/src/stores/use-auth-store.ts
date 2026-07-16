@@ -1,76 +1,78 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import axios from "axios";
-import type { UserAccount } from "@/types";
+import { create } from "zustand";
+
 import { apiClient } from "@/lib/api-client";
+import type { UserAccount } from "@/types";
+
+export type AuthNextStep =
+  "password_change_required" | "mfa_setup_required" | "mfa_required" | null;
 
 interface AuthState {
   currentUser: UserAccount | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (groupName: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  loginAs: (account: UserAccount) => void;
-  logout: () => void;
+  nextStep: AuthNextStep;
+  login: (
+    groupName: string,
+    password: string,
+    mfaCode?: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  completeStep: () => void;
+  setNextStep: (nextStep: AuthNextStep) => void;
+  logout: () => Promise<void>;
 }
 
-interface LoginResponse {
-  data: {
-    token: string;
-    user: UserAccount;
-  };
-  status: number;
+interface AuthResponse {
+  data: { user: UserAccount; nextStep: AuthNextStep };
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      currentUser: null,
-      isAuthenticated: false,
-      isLoading: false,
+async function ensureCsrfCookie() {
+  await apiClient.get("/auth/csrf/");
+}
 
-      login: async (groupName, password) => {
-        if (!groupName.trim() || !password) {
-          return { success: false, error: "Введите логин и пароль" };
-        }
+export const useAuthStore = create<AuthState>((set) => ({
+  currentUser: null,
+  isAuthenticated: false,
+  isLoading: false,
+  nextStep: null,
 
-        set({ isLoading: true });
-        try {
-          const { data } = await apiClient.post<LoginResponse>("/auth/login/", {
-            groupName: groupName.trim(),
-            password,
-          });
-
-          localStorage.setItem("auth-token", data.data.token);
-          set({
-            currentUser: data.data.user,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-          return { success: true };
-        } catch (error) {
-          set({ isLoading: false });
-          if (axios.isAxiosError(error) && error.response?.data?.message) {
-            return { success: false, error: error.response.data.message };
-          }
-          return { success: false, error: "Ошибка входа" };
-        }
-      },
-
-      loginAs: (account) => {
-        set({ currentUser: account, isAuthenticated: true });
-      },
-
-      logout: () => {
-        localStorage.removeItem("auth-token");
-        set({ currentUser: null, isAuthenticated: false });
-      },
-    }),
-    {
-      name: "auth-storage",
-      partialize: (state) => ({
-        currentUser: state.currentUser,
-        isAuthenticated: state.isAuthenticated,
-      }),
+  login: async (groupName, password, mfaCode) => {
+    if (!groupName.trim() || !password) {
+      return { success: false, error: "Введите логин и пароль" };
     }
-  )
-);
+    set({ isLoading: true });
+    try {
+      await ensureCsrfCookie();
+      const { data } = await apiClient.post<AuthResponse>("/auth/login/", {
+        groupName: groupName.trim(),
+        password,
+        mfaCode,
+      });
+      set({
+        currentUser: data.data.user,
+        isAuthenticated: data.data.nextStep !== "mfa_required",
+        isLoading: false,
+        nextStep: data.data.nextStep,
+      });
+      return { success: true };
+    } catch (error) {
+      set({ isLoading: false });
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        return { success: false, error: error.response.data.message };
+      }
+      return { success: false, error: "Ошибка входа" };
+    }
+  },
+
+  completeStep: () => set({ nextStep: null }),
+  setNextStep: (nextStep) => set({ nextStep }),
+
+  logout: async () => {
+    try {
+      await ensureCsrfCookie();
+      await apiClient.post("/auth/logout/");
+    } finally {
+      set({ currentUser: null, isAuthenticated: false, nextStep: null });
+    }
+  },
+}));

@@ -1,4 +1,5 @@
 import re
+import secrets
 import uuid
 
 from django.contrib.auth import get_user_model
@@ -29,9 +30,9 @@ def _make_student_id(group_name: str, idx: int) -> str:
 
 @transaction.atomic
 def persist_imported_data(students: list[ExcelStudentRaw], events: list[ExcelEvent]):
-    default_password = "1234"
     students_imported = 0
     events_imported = 0
+    credentials = []
 
     for idx, raw in enumerate(students):
         course = _detect_course(raw.group_name)
@@ -57,14 +58,17 @@ def persist_imported_data(students: list[ExcelStudentRaw], events: list[ExcelEve
             average_score=raw.average_score,
         )
 
+        temporary_password = secrets.token_urlsafe(12)
         User.objects.create_user(
             id=student_id,
             username=readable_id,
-            password=default_password,
+            password=temporary_password,
             first_name=raw.full_name,
             role=User.Role.STUDENT,
             group_name=raw.group_name,
+            password_change_required=True,
         )
+        credentials.append({"studentId": readable_id, "temporaryPassword": temporary_password})
 
         Attendance.objects.bulk_create(
             [
@@ -95,4 +99,4 @@ def persist_imported_data(students: list[ExcelStudentRaw], events: list[ExcelEve
         if created:
             events_imported += 1
 
-    return {"students_imported": students_imported, "events_imported": events_imported}
+    return {"students_imported": students_imported, "events_imported": events_imported, "credentials": credentials}

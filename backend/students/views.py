@@ -1,8 +1,10 @@
 from django.db.models import Avg, Max, Q
 from rest_framework import viewsets
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
+
+from users.permissions import AdminFullyAuthenticated, FullyAuthenticated
+from security.models import AccessPolicy
 
 from .models import Activity, Attendance, Student
 from .serializers import (
@@ -26,6 +28,10 @@ class StudentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        if self.request.user.role == "student":
+            policy = AccessPolicy.current()
+            if not policy.allow_other_profiles:
+                return qs.filter(pk=self.request.user.id)
         course = self.request.query_params.get("course")
         search = self.request.query_params.get("search", "").strip()
         if course:
@@ -40,18 +46,31 @@ class StudentViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy"]:
-            return [IsAdminUser()]
-        return [IsAuthenticated()]
+            return [AdminFullyAuthenticated()]
+        return [FullyAuthenticated()]
 
-    @action(detail=True, methods=["get"], permission_classes=[IsAuthenticated])
+    def _profile_response(self, student):
+        data = StudentProfileSerializer(student).data
+        if self.request.user.role == "student" and student.id != self.request.user.id:
+            policy = AccessPolicy.current()
+            if not policy.allow_other_attendance:
+                data.pop("attendances", None)
+                data.pop("attendance_pct", None)
+            if not policy.allow_other_activities:
+                data.pop("activities", None)
+                data.pop("project_count", None)
+        return Response({"data": data, "status": 200})
+
+    def retrieve(self, request, *args, **kwargs):
+        return self._profile_response(self.get_object())
+
+    @action(detail=True, methods=["get"], permission_classes=[FullyAuthenticated])
     def profile(self, request, pk=None):
-        student = self.get_object()
-        serializer = StudentProfileSerializer(student)
-        return Response({"data": serializer.data, "status": 200})
+        return self._profile_response(self.get_object())
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([FullyAuthenticated])
 def rating_view(request):
     course = request.query_params.get("course")
     search = request.query_params.get("search", "").strip().lower()
@@ -70,6 +89,7 @@ def rating_view(request):
     students.sort(key=lambda s: -s.total_score)
 
     current_user_id = request.user.id if request.user.role == "student" else None
+    policy = AccessPolicy.current()
 
     result = []
     for i, student in enumerate(students):
@@ -83,7 +103,7 @@ def rating_view(request):
             {
                 "id": str(student.id),
                 "rank": i + 1,
-                "name": student.name,
+                "name": student.name if request.user.role == "admin" or policy.show_names_in_rating else f"Студент #{i + 1}",
                 "course": student.course,
                 "group": student.group_name,
                 "academicScore": round(student.average_score, 2),
@@ -124,7 +144,7 @@ def rating_view(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([FullyAuthenticated])
 def dashboard_metrics_view(request):
     total = Student.objects.count()
     avg_gpa = Student.objects.aggregate(avg=Avg("average_score"))["avg"] or 0
@@ -152,7 +172,7 @@ def dashboard_metrics_view(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([FullyAuthenticated])
 def gpa_distribution_view(request):
     buckets = [
         (0, 2, "< 2.0"),
@@ -178,7 +198,7 @@ def gpa_distribution_view(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([FullyAuthenticated])
 def attendance_trends_view(request):
     max_week = Attendance.objects.aggregate(max_week=Max("week_index"))["max_week"]
     if max_week is None:

@@ -76,7 +76,7 @@ export default function ChatPage() {
             </div>
             <div>
               <h3 className="text-base font-bold text-text-main mb-1">Задайте вопрос</h3>
-              <p className="text-sm text-secondary max-w-sm">
+              <p className="text-sm text-secondary max-w-[24rem]">
                 Я помогу разобраться в рейтинге, баллах, стипендиях и функционале системы
               </p>
             </div>

@@ -15,3 +15,4 @@ export { sendChatMessage, checkHealth, createChatMessage } from "./chat";
 export { fetchNotifications, markAsRead, markAllAsRead } from "./notification";
 export { fetchScholarshipOffers } from "./scholarship-service";
 export { uploadExcel } from "./import";
+export { consumeCredentialBundle, getAccessPolicy, updateAccessPolicy } from "./security";
