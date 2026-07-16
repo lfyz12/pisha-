@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "ai_rules",
     "server",
     "security",
+    "ai_assistant",
 ]
 
 MIDDLEWARE = [
@@ -95,6 +96,8 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "static"
 
+MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "/app/media")
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.User"
@@ -153,8 +156,8 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
 MAX_EXCEL_UPLOAD_BYTES = 10 * 1024 * 1024
 MAX_EXCEL_ARCHIVE_FILES = 200
 MAX_EXCEL_UNCOMPRESSED_BYTES = 50 * 1024 * 1024
@@ -167,4 +170,25 @@ REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = [
     "rest_framework.throttling.AnonRateThrottle",
     "rest_framework.throttling.UserRateThrottle",
 ]
-REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {"anon": "100/hour", "user": "1000/hour"}
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {"anon": "100/hour", "user": "1000/hour", "ai_chat": "30/hour"}
+
+CELERY_BROKER_URL = os.environ.get(
+    "CELERY_BROKER_URL", os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+)
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+
+LITELLM_BASE_URL = os.environ.get("LITELLM_BASE_URL", "http://localhost:4000")
+LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "")
+LITELLM_CHAT_MODEL = os.environ.get("LITELLM_CHAT_MODEL", "gpt-4o-mini")
+LITELLM_EMBEDDING_MODEL = os.environ.get("LITELLM_EMBEDDING_MODEL", "text-embedding-3-small")
+LITELLM_RERANK_MODEL = os.environ.get("LITELLM_RERANK_MODEL", "BAAI/bge-reranker-v2-m3")
+LITELLM_CLASSIFIER_MODEL = os.environ.get("LITELLM_CLASSIFIER_MODEL") or LITELLM_CHAT_MODEL
+
+SURREALDB_URL = os.environ.get("SURREALDB_URL", "ws://localhost:8000")
+SURREALDB_NS = os.environ.get("SURREALDB_NS", "pisha")
+SURREALDB_DB = os.environ.get("SURREALDB_DB", "pisha")
+SURREALDB_USER = os.environ.get("SURREALDB_USER", "root")
+SURREALDB_PASS = os.environ.get("SURREALDB_PASS", "")
+
+AI_EMBEDDING_DIM = int(os.environ.get("AI_EMBEDDING_DIM", "1536"))
+AI_MAX_UPLOAD_MB = int(os.environ.get("AI_MAX_UPLOAD_MB", "20"))

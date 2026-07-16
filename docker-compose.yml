@@ -16,6 +16,32 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: pisha-redis
+    networks:
+      - pisha-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  surrealdb:
+    image: surrealdb/surrealdb:v3
+    container_name: pisha-surrealdb
+    user: root
+    command: start --log info --user root --pass ${SURREALDB_PASSWORD:-dev-surreal-password} surrealkv:///data
+    volumes:
+      - surreal-data:/data
+    networks:
+      - pisha-network
+    healthcheck:
+      test: ["CMD", "/surreal", "is-ready", "--endpoint", "ws://localhost:8000"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build: ./backend
     container_name: pisha-backend
@@ -31,15 +57,77 @@ services:
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:?CORS_ALLOWED_ORIGINS must be set}
       - DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:?DEFAULT_ADMIN_PASSWORD must be set}
       - FIELD_ENCRYPTION_KEY=${FIELD_ENCRYPTION_KEY:?FIELD_ENCRYPTION_KEY must be set}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
+      - SURREALDB_URL=${SURREALDB_URL:-ws://surrealdb:8000}
+      - SURREALDB_NS=${SURREALDB_NS:-pisha}
+      - SURREALDB_DB=${SURREALDB_DB:-pisha}
+      - SURREALDB_USER=${SURREALDB_USER:-root}
+      - SURREALDB_PASS=${SURREALDB_PASSWORD:-}
+      - LITELLM_BASE_URL=${LITELLM_BASE_URL:-http://localhost:4000}
+      - LITELLM_API_KEY=${LITELLM_API_KEY:-}
+      - LITELLM_CHAT_MODEL=${LITELLM_CHAT_MODEL:-gpt-4o-mini}
+      - LITELLM_EMBEDDING_MODEL=${LITELLM_EMBEDDING_MODEL:-text-embedding-3-small}
+      - LITELLM_RERANK_MODEL=${LITELLM_RERANK_MODEL:-BAAI/bge-reranker-v2-m3}
+      - LITELLM_CLASSIFIER_MODEL=${LITELLM_CLASSIFIER_MODEL:-}
+      - MEDIA_ROOT=${MEDIA_ROOT:-/app/media}
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+      surrealdb:
+        condition: service_healthy
     networks:
       - pisha-network
+    volumes:
+      - media-data:/app/media
     command: >
       sh -c "python manage.py migrate &&
              python manage.py seed_database &&
              gunicorn --bind 0.0.0.0:8000 pisha_backend.wsgi:application"
+
+  celery-worker:
+    build: ./backend
+    container_name: pisha-celery-worker
+    environment:
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY must be set}
+      - DEBUG=${DEBUG:-False}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:?ALLOWED_HOSTS must be set}
+      - POSTGRES_DB=pisha_db
+      - POSTGRES_USER=pisha
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:?CORS_ALLOWED_ORIGINS must be set}
+      - DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:?DEFAULT_ADMIN_PASSWORD must be set}
+      - FIELD_ENCRYPTION_KEY=${FIELD_ENCRYPTION_KEY:?FIELD_ENCRYPTION_KEY must be set}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
+      - SURREALDB_URL=${SURREALDB_URL:-ws://surrealdb:8000}
+      - SURREALDB_NS=${SURREALDB_NS:-pisha}
+      - SURREALDB_DB=${SURREALDB_DB:-pisha}
+      - SURREALDB_USER=${SURREALDB_USER:-root}
+      - SURREALDB_PASS=${SURREALDB_PASSWORD:-}
+      - LITELLM_BASE_URL=${LITELLM_BASE_URL:-http://localhost:4000}
+      - LITELLM_API_KEY=${LITELLM_API_KEY:-}
+      - LITELLM_CHAT_MODEL=${LITELLM_CHAT_MODEL:-gpt-4o-mini}
+      - LITELLM_EMBEDDING_MODEL=${LITELLM_EMBEDDING_MODEL:-text-embedding-3-small}
+      - LITELLM_RERANK_MODEL=${LITELLM_RERANK_MODEL:-BAAI/bge-reranker-v2-m3}
+      - LITELLM_CLASSIFIER_MODEL=${LITELLM_CLASSIFIER_MODEL:-}
+      - MEDIA_ROOT=${MEDIA_ROOT:-/app/media}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      surrealdb:
+        condition: service_healthy
+    networks:
+      - pisha-network
+    volumes:
+      - media-data:/app/media
+    command: celery -A pisha_backend worker --loglevel=info
 
   frontend:
     build: ./frontend
@@ -53,6 +141,8 @@ services:
 
 volumes:
   pisha-postgres-data:
+  surreal-data:
+  media-data:
 
 networks:
   pisha-network:
