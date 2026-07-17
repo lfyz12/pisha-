@@ -124,7 +124,7 @@ def rating_view(request):
     current = next((s for s in result if s["isCurrentUser"]), None)
 
     if current:
-        rating = get_student_rating(request.user)
+        rating = get_student_rating(request.user, students=students)
         stats = {
             "myPlace": rating["my_place"],
             "myPlaceChange": 0,

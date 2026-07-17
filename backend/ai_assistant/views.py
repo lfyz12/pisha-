@@ -41,6 +41,19 @@ def _is_admin(user):
     return getattr(user, "role", None) == "admin" or getattr(user, "is_staff", False)
 
 
+class AIChatScopedRateThrottle(ScopedRateThrottle):
+    """Scoped rate throttle with the ``ai_chat`` scope hardcoded."""
+
+    scope = "ai_chat"
+
+    def __init__(self):
+        self.rate = self.get_rate()
+        self.num_requests, self.duration = self.parse_rate(self.rate)
+
+    def allow_request(self, request, view):
+        return super(ScopedRateThrottle, self).allow_request(request, view)
+
+
 def _forbidden(message="Not permitted"):
     return Response(
         {"message": message, "status": status.HTTP_403_FORBIDDEN},
@@ -360,9 +373,19 @@ def _get_student_or_403(user):
         return None, _forbidden("No student profile for this account")
 
 
+def _check_ai_chat_access(request):
+    """Return a 403 response unless the user is admin or allow_ai_chat is on."""
+    if not (_is_admin(request.user) or AccessPolicy.current().allow_ai_chat):
+        return _forbidden("AI chat is disabled")
+    return None
+
+
 @api_view(["GET", "POST"])
 @permission_classes([FullyAuthenticated])
 def chat_session_list_create_view(request):
+    error = _check_ai_chat_access(request)
+    if error is not None:
+        return error
     student, error = _get_student_or_403(request.user)
     if error is not None:
         return error
@@ -385,6 +408,9 @@ def chat_session_list_create_view(request):
 @api_view(["DELETE"])
 @permission_classes([FullyAuthenticated])
 def chat_session_delete_view(request, pk):
+    error = _check_ai_chat_access(request)
+    if error is not None:
+        return error
     student, error = _get_student_or_403(request.user)
     if error is not None:
         return error
@@ -400,6 +426,9 @@ def chat_session_delete_view(request, pk):
 @api_view(["GET"])
 @permission_classes([FullyAuthenticated])
 def chat_message_list_view(request, pk):
+    error = _check_ai_chat_access(request)
+    if error is not None:
+        return error
     student, error = _get_student_or_403(request.user)
     if error is not None:
         return error
@@ -411,15 +440,16 @@ def chat_message_list_view(request, pk):
 
 @api_view(["POST"])
 @permission_classes([FullyAuthenticated])
-@throttle_classes([ScopedRateThrottle])
+@throttle_classes([AIChatScopedRateThrottle])
 def chat_stream_view(request, pk):
     """Stream the assistant response for a chat session via SSE."""
     student, error = _get_student_or_403(request.user)
     if error is not None:
         return error
 
-    if not (_is_admin(request.user) or AccessPolicy.current().allow_ai_chat):
-        return _forbidden("AI chat is disabled")
+    error = _check_ai_chat_access(request)
+    if error is not None:
+        return error
 
     session = get_object_or_404(ChatSession, pk=pk, student=student)
 
@@ -435,7 +465,8 @@ def chat_stream_view(request, pk):
     )
 
     history_messages = []
-    for msg in session.messages.order_by("created_at")[:20]:
+    recent = list(session.messages.order_by("-created_at")[:20])[::-1]
+    for msg in recent:
         if msg.role == ChatMessage.Role.USER:
             history_messages.append(HumanMessage(content=msg.content))
         elif msg.role == ChatMessage.Role.ASSISTANT:
@@ -505,6 +536,3 @@ def chat_stream_view(request, pk):
                 break
 
     return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
-
-
-chat_stream_view.throttle_scope = "ai_chat"

@@ -12,15 +12,21 @@ def _get_student_for_user(user):
     return Student.objects.get(pk=user.id)
 
 
-def get_student_rating(user):
+def get_student_rating(user, students=None):
     """Return the current student's rating context.
 
     Keys: rank, total_score, trend, academic_score, activity_score,
     activity_level, my_place, top_score, average_score.
+
+    ``students`` may be a queryset or iterable of Student objects; when given,
+    rank and aggregates are computed over that cohort. Defaults to all
+    students.
     """
     student = _get_student_for_user(user)
 
-    students = list(Student.objects.prefetch_related("activities"))
+    if students is None:
+        students = Student.objects.prefetch_related("activities")
+    students = list(students)
     students.sort(key=lambda s: -s.total_score)
 
     student_index = next(

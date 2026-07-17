@@ -1,5 +1,6 @@
 """Tests for the AI assistant agent tools and graph builder."""
 
+import json
 from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
@@ -52,7 +53,7 @@ class AgentToolTests(TestCase):
 
     def test_get_my_rating_returns_expected_keys(self):
         result = self.tools["get_my_rating"].invoke({})
-        data = __import__("json").loads(result)
+        data = json.loads(result)
         self.assertIn("rank", data)
         self.assertIn("total_score", data)
         self.assertIn("trend", data)
@@ -60,14 +61,14 @@ class AgentToolTests(TestCase):
 
     def test_get_rating_analytics_returns_aggregate(self):
         result = self.tools["get_rating_analytics"].invoke({})
-        data = __import__("json").loads(result)
+        data = json.loads(result)
         self.assertIn("metrics", data)
         self.assertIn("gpa_distribution", data)
         self.assertIn("attendance_trends", data)
 
     def test_get_my_activities_enriched_with_event(self):
         result = self.tools["get_my_activities"].invoke({})
-        data = __import__("json").loads(result)
+        data = json.loads(result)
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["name"], "Conference")
         self.assertEqual(data[0]["event_date"], "2025-06-01")
@@ -91,14 +92,14 @@ class AgentToolTests(TestCase):
             ready.categories.add(category)
 
         result = self.tools["get_my_projects"].invoke({})
-        data = __import__("json").loads(result)
+        data = json.loads(result)
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["title"], "Ready project")
         self.assertIn("categories", data[0])
 
     def test_list_grant_categories(self):
         result = self.tools["list_grant_categories"].invoke({})
-        data = __import__("json").loads(result)
+        data = json.loads(result)
         self.assertIsInstance(data, list)
         if data:
             self.assertIn("slug", data[0])
@@ -113,7 +114,7 @@ class AgentToolTests(TestCase):
             type=Scholarship.Type.ACADEMIC,
         )
         result = self.tools["list_scholarships"].invoke({})
-        data = __import__("json").loads(result)
+        data = json.loads(result)
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["title"], "Test scholarship")
         self.assertIn("required_score", data[0])
@@ -139,7 +140,7 @@ class AgentToolTests(TestCase):
         mock_rerank.return_value = [(0, 0.95)]
 
         result = self.tools["search_grants"].invoke({"query": "grant"})
-        data = __import__("json").loads(result)
+        data = json.loads(result)
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["title"], "Grant A")
         self.assertEqual(data[0]["source_url"], "https://example.com/a")

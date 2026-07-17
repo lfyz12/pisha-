@@ -130,3 +130,19 @@ class RatingViewCompatibilityTests(TestCase):
         self.assertIn("topScore", stats)
         self.assertIn("averageScore", stats)
         self.assertIn("activityLevel", stats)
+
+    def test_rating_view_stats_reflect_filtered_course_cohort(self):
+        user2, _student2 = _make_student_user(
+            "cohort-1", total_score=200, average_score=4.5, course=1
+        )
+        _user3, _student3 = _make_student_user(
+            "cohort-2", total_score=300, average_score=5.0, course=2
+        )
+        response = self.client.get("/api/rating/?course=1", secure=True)
+        self.assertEqual(response.status_code, 200)
+        data = response.data["data"]
+        self.assertEqual(len(data["students"]), 2)
+        stats = data["stats"]
+        self.assertEqual(stats["myPlace"], 2)
+        self.assertEqual(stats["topScore"], 200)
+        self.assertEqual(stats["averageScore"], 150.0)

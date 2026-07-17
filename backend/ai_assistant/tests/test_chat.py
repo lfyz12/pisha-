@@ -1,5 +1,6 @@
 """Tests for the AI assistant chat sessions and SSE streaming endpoint."""
 
+from datetime import timedelta
 from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
@@ -50,6 +51,12 @@ class ChatSessionTests(TestCase):
         self.client.force_authenticate(self.user)
         self.other_client = APIClient()
         self.other_client.force_authenticate(self.other_user)
+        self._set_allow_ai_chat(True)
+
+    def _set_allow_ai_chat(self, value):
+        policy = AccessPolicy.current()
+        policy.allow_ai_chat = value
+        policy.save(update_fields=["allow_ai_chat"])
 
     def test_list_returns_only_own_sessions(self):
         own = ChatSession.objects.create(student=self.student, title="Own")
@@ -105,6 +112,34 @@ class ChatSessionTests(TestCase):
         url = f"{CHAT_SESSIONS_URL}{session.id}/messages/"
         response = self.client.get(url, secure=True)
         self.assertEqual(response.status_code, 404)
+
+    def test_list_forbidden_when_flag_off(self):
+        self._set_allow_ai_chat(False)
+        response = self.client.get(CHAT_SESSIONS_URL, secure=True)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("message", response.data)
+
+    def test_create_forbidden_when_flag_off(self):
+        self._set_allow_ai_chat(False)
+        response = self.client.post(CHAT_SESSIONS_URL, {}, format="json", secure=True)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(ChatSession.objects.count(), 0)
+
+    def test_delete_forbidden_when_flag_off(self):
+        session = ChatSession.objects.create(student=self.student)
+        self._set_allow_ai_chat(False)
+        response = self.client.delete(
+            f"{CHAT_SESSIONS_URL}{session.id}/", secure=True
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(ChatSession.objects.filter(pk=session.id).exists())
+
+    def test_messages_forbidden_when_flag_off(self):
+        session = ChatSession.objects.create(student=self.student)
+        self._set_allow_ai_chat(False)
+        url = f"{CHAT_SESSIONS_URL}{session.id}/messages/"
+        response = self.client.get(url, secure=True)
+        self.assertEqual(response.status_code, 403)
 
 
 class ChatStreamTests(TestCase):
@@ -171,3 +206,53 @@ class ChatStreamTests(TestCase):
         self.assertEqual(messages[0].content, "hi")
         self.assertEqual(messages[1].role, ChatMessage.Role.ASSISTANT)
         self.assertEqual(messages[1].content, "Привет!")
+
+    @patch("ai_assistant.views.build_agent")
+    def test_history_contains_last_20_messages(self, mock_build_agent):
+        session = ChatSession.objects.create(student=self.student)
+        # Seed messages with past timestamps so the freshly saved user
+        # message is the most recent one.
+        base = timezone.now() - timedelta(seconds=100)
+        for index in range(1, 26):
+            role = ChatMessage.Role.USER if index % 2 else ChatMessage.Role.ASSISTANT
+            message = ChatMessage.objects.create(
+                session=session, role=role, content=f"msg-{index}"
+            )
+            ChatMessage.objects.filter(pk=message.pk).update(
+                created_at=base + timedelta(seconds=index)
+            )
+
+        mock_graph = MagicMock()
+        mock_graph.stream.return_value = [(AIMessage(content="ok"), {})]
+        mock_build_agent.return_value = mock_graph
+
+        response = self.client.post(
+            self._stream_url(session), {"content": "new"}, format="json", secure=True
+        )
+        self.assertEqual(response.status_code, 200)
+        b"".join(response.streaming_content)
+
+        args, _kwargs = mock_graph.stream.call_args
+        history = args[0]["messages"]
+        self.assertEqual(len(history), 20)
+        contents = [m.content for m in history]
+        self.assertEqual(contents[0], "msg-7")
+        self.assertEqual(contents[-1], "new")
+
+    @patch("ai_assistant.views.build_agent")
+    def test_stream_throttled_after_30_requests(self, mock_build_agent):
+        session = ChatSession.objects.create(student=self.student)
+        mock_graph = MagicMock()
+        mock_graph.stream.return_value = [(AIMessage(content="ok"), {})]
+        mock_build_agent.return_value = mock_graph
+
+        url = self._stream_url(session)
+        statuses = []
+        for _ in range(31):
+            response = self.client.post(
+                url, {"content": "hi"}, format="json", secure=True
+            )
+            statuses.append(response.status_code)
+
+        self.assertEqual(statuses.count(200), 30)
+        self.assertEqual(statuses[-1], 429)
