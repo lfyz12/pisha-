@@ -31,6 +31,38 @@ docker compose up --build
 
 Frontend будет доступен на `http://localhost`. Для локальной frontend-разработки используйте `cd frontend && npm run dev`; backend и PostgreSQL должны быть запущены отдельно.
 
+## AI-модуль
+
+ИИ-консультант УПИШ: студенты общаются с ассистентом о рейтинге, грантах, стипендиях и траекториях развития и загружают свои проекты (md/docx/pdf/pptx); администратор ведёт базу знаний о грантах (файлы и URL). Ответы строятся на реальных данных (рейтинг, мероприятия, база знаний) через LangGraph-агента с инструментами; потоковая выдача — по SSE. Обработка документов (парсинг → классификация и саммари → чанкирование → эмбеддинги) выполняется асинхронно в Celery; векторный поиск — SurrealDB (HNSW + полнотекстовый BM25); все LLM-запросы идут через внешний LiteLLM-прокси.
+
+Требуемые переменные окружения (шаблоны — `./.env.example` и `backend/.env.example`):
+
+- `LITELLM_BASE_URL`, `LITELLM_API_KEY` — адрес и ключ LiteLLM-прокси (обязательны);
+- `LITELLM_CHAT_MODEL`, `LITELLM_CLASSIFIER_MODEL`, `LITELLM_EMBEDDING_MODEL`, `LITELLM_RERANK_MODEL` — модели;
+- `SURREALDB_URL`, `SURREALDB_NS`, `SURREALDB_DB`, `SURREALDB_USER`, `SURREALDB_PASSWORD` — подключение к SurrealDB;
+- `REDIS_URL` — брокер Celery;
+- `AI_EMBEDDING_DIM` (по умолчанию 1536 — должна совпадать с размерностью модели эмбеддингов), `AI_MAX_UPLOAD_MB` (по умолчанию 20).
+
+Запуск — вместе со всем стеком:
+
+```bash
+docker compose up --build   # поднимает redis, surrealdb, backend и celery-worker
+```
+
+После первого запуска создайте схему SurrealDB (команда идемпотентна):
+
+```bash
+docker compose exec backend python manage.py init_surreal_schema
+```
+
+Доступ студентов к чату и проектам включается флагом `allow_ai_chat` в `AccessPolicy` (по умолчанию выключен; администраторы имеют доступ всегда).
+
+Документация:
+
+- [Дизайн AI-подсистемы](docs/superpowers/specs/2026-07-16-ai-assistant-design.md)
+- [Архитектура C1/C2](docs/superpowers/specs/2026-07-16-ai-assistant-c1-c2-architecture.md)
+- [Общая схема системы](docs/system-scheme-ru.md)
+
 ## Tech Stack
 
 - **React 19** + **TypeScript**
