@@ -225,7 +225,11 @@ export default function ChatPage() {
       });
     } finally {
       if (sessionId && !controller.signal.aborted) {
-        await finalizeLiveMessages(sessionId);
+        try {
+          await finalizeLiveMessages(sessionId);
+        } catch {
+          // History refetch failed (e.g. network loss) — keep live messages as-is.
+        }
       }
       if (streamAbortRef.current === controller) {
         streamAbortRef.current = null;
