@@ -53,17 +53,24 @@ def _define_fulltext_index_sql(table: str) -> str:
     )
 
 
-CREATE_CHUNK_SQL = "CREATE {table} CONTENT $record;"
+INSERT_CHUNKS_SQL = "INSERT INTO {table} $records;"
 
 DELETE_DOC_CHUNKS_SQL = "DELETE {table} WHERE doc_id = $doc_id;"
 
 _CATEGORY_FILTER_SQL = " AND categories CONTAINSANY $categories"
 
-# The KNN limit must be a literal integer in SurrealQL, so it is interpolated
-# (after int() coercion) rather than passed as a parameter.
+
+def _knn_ef(limit: int) -> int:
+    """HNSW candidate-list size (EF) for a KNN query; must exceed the limit."""
+    return max(limit * 4, 40)
+
+
+# SurrealQL requires the KNN limit and EF as integer literals (they cannot be
+# bound parameters), so both are int-coerced and interpolated. SurrealDB v3
+# dropped the bare <|k|> form: <|k, EF|> is required to hit the HNSW index.
 VECTOR_SEARCH_SQL = (
     "SELECT *, vector::distance::knn() AS score FROM {table} "
-    "WHERE embedding <|{limit}|> $vector{category_filter};"
+    "WHERE embedding <|{limit}, {ef}|> $vector{category_filter};"
 )
 
 FULLTEXT_SEARCH_SQL = (
@@ -146,7 +153,11 @@ def upsert_chunks(
     chunks: list[str],
     vectors: list[list[float]],
 ) -> None:
-    """Insert one record per chunk into ``table``.
+    """Replace the chunks of document ``doc_id`` in ``table`` (idempotent).
+
+    Existing rows for ``doc_id`` are deleted first, so re-ingesting a document
+    never leaves duplicated or stale chunks behind; the new chunks are then
+    written with a single batched INSERT (one RPC for the whole document).
 
     Each record carries ``doc_id``, its ``chunk_index``, the ``text``, the
     ``embedding`` vector and every key from ``meta`` (e.g. ``categories``).
@@ -157,17 +168,20 @@ def upsert_chunks(
             f"chunks and vectors must have the same length "
             f"({len(chunks)} != {len(vectors)})."
         )
-    db = get_client()
-    sql = CREATE_CHUNK_SQL.format(table=table)
-    for chunk_index, (text, embedding) in enumerate(zip(chunks, vectors)):
-        record = {
+    records = [
+        {
             **(meta or {}),
             "doc_id": doc_id,
             "chunk_index": chunk_index,
             "text": text,
             "embedding": embedding,
         }
-        db.query(sql, {"record": record})
+        for chunk_index, (text, embedding) in enumerate(zip(chunks, vectors))
+    ]
+    db = get_client()
+    db.query(DELETE_DOC_CHUNKS_SQL.format(table=table), {"doc_id": doc_id})
+    if records:
+        db.query(INSERT_CHUNKS_SQL.format(table=table), {"records": records})
 
 
 def delete_doc_chunks(table: str, doc_id: str) -> None:
@@ -191,6 +205,11 @@ def search(
     hits first, each keeping its ``score``), and caps the result at ``limit``.
     When ``categories`` is given, both searches only consider chunks whose
     ``categories`` field overlaps with it.
+
+    Note: ``score`` values are NOT comparable across the two legs — vector
+    hits carry a cosine distance (lower is better) while full-text hits carry
+    a BM25 score (higher is better). Callers that need a single ranking must
+    rerank the merged list (see services.llm.rerank).
     """
     _validate_table(table)
     limit = int(limit)
@@ -204,7 +223,10 @@ def search(
 
     vector_rows = db.query(
         VECTOR_SEARCH_SQL.format(
-            table=table, limit=limit, category_filter=category_filter
+            table=table,
+            limit=limit,
+            ef=_knn_ef(limit),
+            category_filter=category_filter,
         ),
         params,
     )

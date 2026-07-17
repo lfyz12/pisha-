@@ -59,6 +59,14 @@ class KBDocument(models.Model):
             raise ValidationError(
                 "Exactly one of file or source_url must be set."
             )
+        if self.source_type == self.SourceType.FILE and not self.file:
+            raise ValidationError(
+                "A file must be uploaded when source_type is 'file'."
+            )
+        if self.source_type == self.SourceType.URL and not self.source_url:
+            raise ValidationError(
+                "source_url must be set when source_type is 'url'."
+            )
 
 
 class StudentProject(models.Model):

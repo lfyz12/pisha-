@@ -71,7 +71,7 @@ class RepositoryTests(SimpleTestCase):
 
     # -- upsert_chunks -------------------------------------------------------
 
-    def test_upsert_chunks_creates_one_record_per_chunk(self):
+    def test_upsert_chunks_deletes_then_inserts_all_records_in_one_batch(self):
         surreal.upsert_chunks(
             "kb_chunk",
             "doc-1",
@@ -81,20 +81,41 @@ class RepositoryTests(SimpleTestCase):
         )
 
         self.assertEqual(self.client.query.call_count, 2)
-        for index, call in enumerate(self.client.query.call_args_list):
-            sql, params = call.args
-            self.assertEqual(sql, "CREATE kb_chunk CONTENT $record;")
-            self.assertEqual(
-                params["record"],
+        delete_call, insert_call = self.client.query.call_args_list
+        self.assertEqual(
+            delete_call.args,
+            ("DELETE kb_chunk WHERE doc_id = $doc_id;", {"doc_id": "doc-1"}),
+        )
+        sql, params = insert_call.args
+        self.assertEqual(sql, "INSERT INTO kb_chunk $records;")
+        self.assertEqual(
+            params["records"],
+            [
                 {
                     "categories": ["admission"],
                     "title": "Rules",
                     "doc_id": "doc-1",
-                    "chunk_index": index,
-                    "text": ["chunk a", "chunk b"][index],
-                    "embedding": [[0.1, 0.2], [0.3, 0.4]][index],
+                    "chunk_index": 0,
+                    "text": "chunk a",
+                    "embedding": [0.1, 0.2],
                 },
-            )
+                {
+                    "categories": ["admission"],
+                    "title": "Rules",
+                    "doc_id": "doc-1",
+                    "chunk_index": 1,
+                    "text": "chunk b",
+                    "embedding": [0.3, 0.4],
+                },
+            ],
+        )
+
+    def test_upsert_chunks_with_no_chunks_only_deletes(self):
+        surreal.upsert_chunks("kb_chunk", "doc-1", {}, [], [])
+
+        self.client.query.assert_called_once_with(
+            "DELETE kb_chunk WHERE doc_id = $doc_id;", {"doc_id": "doc-1"}
+        )
 
     def test_upsert_chunks_rejects_length_mismatch(self):
         with self.assertRaises(ValueError):
@@ -150,7 +171,7 @@ class RepositoryTests(SimpleTestCase):
 
         vector_sql, fulltext_sql = _issued_sql(self.client)
         self.assertIn("FROM project_chunk", vector_sql)
-        self.assertIn("<|20|>", vector_sql)
+        self.assertIn("<|20, 80|>", vector_sql)
         self.assertIn("vector::distance::knn()", vector_sql)
         self.assertIn("FROM project_chunk", fulltext_sql)
         self.assertIn("text @0@ $query_text", fulltext_sql)
@@ -169,7 +190,7 @@ class RepositoryTests(SimpleTestCase):
             self.assertIn("categories CONTAINSANY $categories", statement)
         params = self.client.query.call_args.args[1]
         self.assertEqual(params["categories"], ["c1"])
-        self.assertIn("<|5|>", _issued_sql(self.client)[0])
+        self.assertIn("<|5, 40|>", _issued_sql(self.client)[0])
 
     def test_search_rejects_unknown_table(self):
         with self.assertRaises(ValueError):

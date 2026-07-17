@@ -15,6 +15,14 @@ MAX_PDF_PAGES = 200
 _BLANK_LINES_RE = re.compile(r"\n{3,}")
 
 
+class DocumentParsingError(ValueError):
+    """Raised when a document cannot be parsed (corrupt or unreadable file).
+
+    Subclasses ValueError so existing ``except ValueError`` callers keep
+    working; unsupported extensions also raise it (see extract_text).
+    """
+
+
 def _normalize_blank_lines(text: str) -> str:
     """Collapse runs of 3+ newlines into a single blank line."""
     return _BLANK_LINES_RE.sub("\n\n", text).strip()
@@ -69,10 +77,19 @@ def extract_text(path) -> str:
     notes). Runs of 3+ newlines in the result are collapsed to 2.
 
     Raises:
-        ValueError: if the file extension is not supported.
+        DocumentParsingError: if the extension is not supported, or the file
+            is corrupt/unreadable for its format (chained from the underlying
+            library error). It subclasses ValueError, so ``except ValueError``
+            catches both failure modes.
     """
     suffix = Path(path).suffix.lower()
     extractor = _EXTRACTORS.get(suffix)
     if extractor is None:
-        raise ValueError("unsupported file extension")
-    return _normalize_blank_lines(extractor(Path(path)))
+        raise DocumentParsingError("unsupported file extension")
+    try:
+        text = extractor(Path(path))
+    except Exception as exc:
+        raise DocumentParsingError(
+            f"failed to parse {suffix} document: {exc}"
+        ) from exc
+    return _normalize_blank_lines(text)

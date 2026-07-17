@@ -17,6 +17,10 @@ def _response(status_code=200, payload=None, text=""):
     return response
 
 
+@override_settings(
+    LITELLM_BASE_URL="http://litellm.test:4000",
+    LITELLM_API_KEY="sk-test",
+)
 class ClientFactoryTests(SimpleTestCase):
     @patch("ai_assistant.services.llm.ChatOpenAI")
     def test_get_chat_llm_uses_chat_model_and_streams(self, chat_cls):
@@ -48,6 +52,12 @@ class ClientFactoryTests(SimpleTestCase):
             api_key=settings.LITELLM_API_KEY,
             model=settings.LITELLM_EMBEDDING_MODEL,
         )
+
+    def test_factories_raise_runtime_error_when_config_is_empty(self):
+        with override_settings(LITELLM_API_KEY=""):
+            for factory in (llm.get_chat_llm, llm.get_classifier_llm, llm.get_embeddings):
+                with self.assertRaisesRegex(RuntimeError, "LITELLM_API_KEY"):
+                    factory()
 
 
 @override_settings(

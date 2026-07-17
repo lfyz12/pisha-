@@ -14,16 +14,21 @@ seed_migration = importlib.import_module(
     "ai_assistant.migrations.0002_seed_grant_categories"
 )
 
-TEMP_MEDIA_ROOT = tempfile.mkdtemp(prefix="ai_assistant_test_media_")
 
+class TempMediaRootMixin:
+    """Give each class its own MEDIA_ROOT, created and removed with the class."""
 
-@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
-class KBDocumentModelTests(TestCase):
     @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._media_root = tempfile.mkdtemp(prefix="ai_assistant_test_media_")
+        cls._media_override = override_settings(MEDIA_ROOT=cls._media_root)
+        cls._media_override.enable()
+        cls.addClassCleanup(cls._media_override.disable)
+        cls.addClassCleanup(shutil.rmtree, cls._media_root, ignore_errors=True)
 
+
+class KBDocumentModelTests(TempMediaRootMixin, TestCase):
     def _pdf_file(self, name="doc.pdf"):
         return SimpleUploadedFile(name, b"%PDF-1.4 fake content", content_type="application/pdf")
 
@@ -58,6 +63,24 @@ class KBDocumentModelTests(TestCase):
         with self.assertRaises(ValidationError):
             doc.clean()
 
+    def test_clean_rejects_file_source_type_with_url(self):
+        doc = KBDocument(
+            title="Wrong field",
+            source_type=KBDocument.SourceType.FILE,
+            source_url="https://example.com/grant",
+        )
+        with self.assertRaisesMessage(ValidationError, "source_type is 'file'"):
+            doc.clean()
+
+    def test_clean_rejects_url_source_type_with_file(self):
+        doc = KBDocument(
+            title="Wrong field",
+            source_type=KBDocument.SourceType.URL,
+            file=self._pdf_file(),
+        )
+        with self.assertRaisesMessage(ValidationError, "source_type is 'url'"):
+            doc.clean()
+
     def test_defaults(self):
         doc = KBDocument.objects.create(
             title="URL doc",
@@ -71,13 +94,7 @@ class KBDocumentModelTests(TestCase):
         self.assertIsNone(doc.created_by)
 
 
-@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
-class StudentProjectModelTests(TestCase):
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
-
+class StudentProjectModelTests(TempMediaRootMixin, TestCase):
     def setUp(self):
         self.student = Student.objects.create(
             name="Test Student",

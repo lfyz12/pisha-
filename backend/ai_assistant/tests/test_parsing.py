@@ -10,7 +10,7 @@ from docx import Document
 from pptx import Presentation
 from pptx.util import Inches
 
-from ai_assistant.services.parsing import extract_text
+from ai_assistant.services.parsing import DocumentParsingError, extract_text
 
 
 def build_pdf_bytes(text: str) -> bytes:
@@ -117,4 +117,19 @@ class ExtractTextTests(SimpleTestCase):
         path = self.dir / "archive.xyz"
         path.write_text("content", encoding="utf-8")
         with self.assertRaisesMessage(ValueError, "unsupported file extension"):
+            extract_text(path)
+
+    def test_corrupt_docx_raises_document_parsing_error(self):
+        path = self.dir / "corrupt.docx"
+        path.write_bytes(b"this is not a real docx archive")
+        with self.assertRaises(DocumentParsingError) as caught:
+            extract_text(path)
+        # The underlying library failure is preserved as the cause.
+        self.assertIsNotNone(caught.exception.__cause__)
+
+    def test_document_parsing_error_is_a_value_error(self):
+        # Callers catching ValueError keep working for both failure modes.
+        path = self.dir / "corrupt.docx"
+        path.write_bytes(b"garbage")
+        with self.assertRaises(ValueError):
             extract_text(path)

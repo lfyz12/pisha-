@@ -20,11 +20,28 @@ RERANK_MAX_RETRIES = 2
 RERANK_INITIAL_BACKOFF_SECONDS = 0.5
 
 
+def _require_litellm_config() -> tuple[str, str]:
+    """Return ``(base_url, api_key)`` or raise if LiteLLM is not configured.
+
+    Raises:
+        RuntimeError: if LITELLM_BASE_URL or LITELLM_API_KEY is empty.
+    """
+    base_url = (getattr(settings, "LITELLM_BASE_URL", "") or "").strip()
+    api_key = (getattr(settings, "LITELLM_API_KEY", "") or "").strip()
+    if not base_url or not api_key:
+        raise RuntimeError(
+            "LiteLLM is not configured: "
+            "LITELLM_BASE_URL and LITELLM_API_KEY must both be non-empty."
+        )
+    return base_url, api_key
+
+
 def get_chat_llm() -> ChatOpenAI:
     """Return the main chat model client (streaming) for the consultant."""
+    base_url, api_key = _require_litellm_config()
     return ChatOpenAI(
-        base_url=settings.LITELLM_BASE_URL,
-        api_key=settings.LITELLM_API_KEY,
+        base_url=base_url,
+        api_key=api_key,
         model=settings.LITELLM_CHAT_MODEL,
         streaming=True,
     )
@@ -32,9 +49,10 @@ def get_chat_llm() -> ChatOpenAI:
 
 def get_classifier_llm() -> ChatOpenAI:
     """Return the cheaper non-streaming model used for query classification."""
+    base_url, api_key = _require_litellm_config()
     return ChatOpenAI(
-        base_url=settings.LITELLM_BASE_URL,
-        api_key=settings.LITELLM_API_KEY,
+        base_url=base_url,
+        api_key=api_key,
         model=settings.LITELLM_CLASSIFIER_MODEL,
         streaming=False,
     )
@@ -42,9 +60,10 @@ def get_classifier_llm() -> ChatOpenAI:
 
 def get_embeddings() -> OpenAIEmbeddings:
     """Return the embeddings client used for chunks and queries."""
+    base_url, api_key = _require_litellm_config()
     return OpenAIEmbeddings(
-        base_url=settings.LITELLM_BASE_URL,
-        api_key=settings.LITELLM_API_KEY,
+        base_url=base_url,
+        api_key=api_key,
         model=settings.LITELLM_EMBEDDING_MODEL,
     )
 
@@ -66,13 +85,7 @@ def rerank(
     Raises:
         RuntimeError: if LiteLLM is not configured or all attempts fail.
     """
-    base_url = (getattr(settings, "LITELLM_BASE_URL", "") or "").strip()
-    api_key = (getattr(settings, "LITELLM_API_KEY", "") or "").strip()
-    if not base_url or not api_key:
-        raise RuntimeError(
-            "LiteLLM rerank is not configured: "
-            "LITELLM_BASE_URL and LITELLM_API_KEY must both be non-empty."
-        )
+    base_url, api_key = _require_litellm_config()
 
     body: dict = {
         "model": settings.LITELLM_RERANK_MODEL,
