@@ -27,6 +27,7 @@ export {
   useDeleteStudentProject,
 } from "./use-student-projects";
 export {
+  CHAT_SESSION_KEYS,
   useChatSessions,
   useChatMessages,
   useCreateChatSession,

@@ -2,16 +2,19 @@ import { useEffect, useMemo, useRef } from "react";
 import { Icon } from "@/components/ui/icon";
 import { IngestionStatusBadge } from "@/components/ingestion-status-badge";
 import { useDeleteStudentProject, useStudentProjects, useUploadStudentProject } from "@/hooks";
+import { extractApiError } from "@/lib/api-error";
 import { toast } from "@/stores";
 
 export const PROJECT_ACCEPT = ".md,.docx,.pdf,.pptx";
+const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
 /**
  * «Мои проекты»: upload button + list with status badges and category chips.
  * Toasts when an uploaded project finishes processing (ready/failed).
+ * Pass `enabled={false}` to pause fetching/polling while the panel is hidden.
  */
-export function StudentProjectsPanel() {
-  const projectsQuery = useStudentProjects();
+export function StudentProjectsPanel({ enabled = true }: { enabled?: boolean }) {
+  const projectsQuery = useStudentProjects(1, enabled);
   const uploadProject = useUploadStudentProject();
   const deleteProject = useDeleteStudentProject();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -45,14 +48,22 @@ export function StudentProjectsPanel() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      toast({ title: "Файл больше 20 МБ", variant: "destructive" });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
     uploadProject.mutate(
       { file },
       {
         onSuccess: () => {
           toast({ title: "Проект загружен", description: "Идёт обработка файла" });
         },
-        onError: () => {
-          toast({ title: "Не удалось загрузить проект", variant: "destructive" });
+        onError: (error) => {
+          toast({
+            title: extractApiError(error, "Не удалось загрузить проект"),
+            variant: "destructive",
+          });
         },
       }
     );

@@ -38,12 +38,10 @@ export async function deleteSession(id: string): Promise<void> {
 }
 
 export async function listMessages(sessionId: string): Promise<ApiResponse<ChatMessage[]>> {
-  const { data } = await apiClient.get<ApiResponse<Record<string, unknown>>>(
+  const { data } = await apiClient.get<ApiResponse<Record<string, unknown>[]>>(
     `/ai/chat/sessions/${sessionId}/messages/`
   );
-  const raw = data.data;
-  const items = Array.isArray(raw) ? raw : [];
-  return { ...data, data: items.map(mapMessage) };
+  return { ...data, data: data.data.map(mapMessage) };
 }
 
 export interface StreamHandlers {

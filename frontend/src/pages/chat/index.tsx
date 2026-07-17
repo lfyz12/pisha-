@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { Icon } from "@/components/ui/icon";
@@ -14,14 +14,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PROJECT_ACCEPT, StudentProjectsPanel } from "@/components/student-projects-panel";
 import {
+  CHAT_SESSION_KEYS,
   useChatMessages,
   useChatSessions,
   useCreateChatSession,
   useDeleteChatSession,
   useUploadStudentProject,
 } from "@/hooks";
-import { streamMessage } from "@/services";
+import { listMessages, streamMessage } from "@/services";
 import { toast, useChatStore } from "@/stores";
+import { extractApiError } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/types";
 
@@ -31,7 +33,7 @@ const QUICK_PROMPTS = [
   "Как рассчитывается балл?",
 ];
 
-const CHAT_SESSIONS_QUERY_KEY = ["chat-sessions"];
+const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
 type LiveMessage = ChatMessage & { failed?: boolean };
 
@@ -43,6 +45,47 @@ function createLocalMessage(role: ChatMessage["role"], content: string): LiveMes
     createdAt: new Date().toISOString(),
   };
 }
+
+function formatTime(ts: string) {
+  return new Date(ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+}
+
+const MessageBubble = memo(function MessageBubble({ msg }: { msg: LiveMessage }) {
+  return (
+    <div className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
+      <div
+        className={cn(
+          "max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed",
+          msg.role === "user"
+            ? "bg-primary text-on-primary rounded-br-md"
+            : msg.failed
+              ? "bg-status-error/10 text-status-error border border-status-error/30 rounded-bl-md"
+              : "bg-surface-container-high text-text-main border border-border-subtle rounded-bl-md"
+        )}
+      >
+        {msg.failed && (
+          <span className="flex items-center gap-1.5 font-semibold mb-1">
+            <Icon name="error" className="text-base shrink-0" />
+            Ошибка
+          </span>
+        )}
+        <p className="whitespace-pre-wrap">{msg.content}</p>
+        <span
+          className={cn(
+            "text-[10px] mt-1 block",
+            msg.role === "user"
+              ? "text-on-primary/60"
+              : msg.failed
+                ? "text-status-error/60"
+                : "text-muted-foreground"
+          )}
+        >
+          {formatTime(msg.createdAt)}
+        </span>
+      </div>
+    </div>
+  );
+});
 
 export default function ChatPage() {
   const currentSessionId = useChatStore((s) => s.currentSessionId);
@@ -67,6 +110,12 @@ export default function ChatPage() {
   const [projectsOpen, setProjectsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const attachInputRef = useRef<HTMLInputElement>(null);
+  const streamAbortRef = useRef<AbortController | null>(null);
+
+  // Abort the in-flight stream when the page unmounts.
+  useEffect(() => {
+    return () => streamAbortRef.current?.abort();
+  }, []);
 
   const sessions = useMemo(() => sessionsQuery.data?.data ?? [], [sessionsQuery.data]);
   const historyMessages = messagesQuery.data?.data ?? [];
@@ -102,19 +151,48 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, isWaitingFirstToken, liveMessages]);
 
+  // Refetch history and drop optimistic messages that the backend already
+  // persisted (matched by role+content). Keeps non-persisted messages, e.g.
+  // the failed bubble after a stream error.
+  const finalizeLiveMessages = async (sessionId: string) => {
+    await queryClient.invalidateQueries({ queryKey: CHAT_SESSION_KEYS.all });
+    const history = await queryClient.fetchQuery({
+      queryKey: CHAT_SESSION_KEYS.messages(sessionId),
+      queryFn: () => listMessages(sessionId),
+    });
+    const persisted = new Set(history.data.map((m) => `${m.role}\n${m.content}`));
+    setLive((prev) => ({
+      ...prev,
+      messages: prev.messages.filter((m) => !persisted.has(`${m.role}\n${m.content}`)),
+    }));
+  };
+
   const handleSend = async (text?: string) => {
     const content = (text ?? draft).trim();
     if (!content || isStreaming || isForbidden) return;
 
+    streamAbortRef.current?.abort();
+    const controller = new AbortController();
+    streamAbortRef.current = controller;
+
     setDraft("");
     setStreaming(true);
 
+    let sessionId = currentSessionId;
     try {
-      let sessionId = currentSessionId;
       if (!sessionId) {
-        const created = await createSession.mutateAsync();
-        sessionId = created.data.id;
-        setCurrentSession(sessionId);
+        try {
+          const created = await createSession.mutateAsync();
+          sessionId = created.data.id;
+          setCurrentSession(sessionId);
+        } catch (error) {
+          toast({
+            title: "Не удалось создать чат",
+            description: extractApiError(error),
+            variant: "destructive",
+          });
+          return;
+        }
       }
 
       const userMessage = createLocalMessage("user", content);
@@ -122,6 +200,7 @@ export default function ChatPage() {
       setLive({ sessionId, messages: [userMessage, assistantMessage] });
 
       await streamMessage(sessionId, content, {
+        signal: controller.signal,
         onToken: (token) => {
           setLive((prev) => {
             const next = [...prev.messages];
@@ -133,10 +212,8 @@ export default function ChatPage() {
           });
         },
       });
-
-      await queryClient.invalidateQueries({ queryKey: CHAT_SESSIONS_QUERY_KEY });
-      setLive({ sessionId, messages: [] });
     } catch (error) {
+      if (controller.signal.aborted) return;
       const message = error instanceof Error ? error.message : "Не удалось получить ответ";
       setLive((prev) => {
         const next = [...prev.messages];
@@ -146,9 +223,14 @@ export default function ChatPage() {
         }
         return { ...prev, messages: next };
       });
-      await queryClient.invalidateQueries({ queryKey: CHAT_SESSIONS_QUERY_KEY });
     } finally {
-      setStreaming(false);
+      if (sessionId && !controller.signal.aborted) {
+        await finalizeLiveMessages(sessionId);
+      }
+      if (streamAbortRef.current === controller) {
+        streamAbortRef.current = null;
+        setStreaming(false);
+      }
     }
   };
 
@@ -173,6 +255,11 @@ export default function ChatPage() {
   const handleAttach = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      toast({ title: "Файл больше 20 МБ", variant: "destructive" });
+      if (attachInputRef.current) attachInputRef.current.value = "";
+      return;
+    }
     uploadProject.mutate(
       { file },
       {
@@ -180,8 +267,11 @@ export default function ChatPage() {
           toast({ title: "Проект загружен", description: "Идёт обработка файла" });
           setProjectsOpen(true);
         },
-        onError: () => {
-          toast({ title: "Не удалось загрузить проект", variant: "destructive" });
+        onError: (error) => {
+          toast({
+            title: extractApiError(error, "Не удалось загрузить проект"),
+            variant: "destructive",
+          });
         },
       }
     );
@@ -194,9 +284,6 @@ export default function ChatPage() {
       handleSend();
     }
   };
-
-  const formatTime = (ts: string) =>
-    new Date(ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
 
   const formatSessionDate = (ts: string) =>
     new Date(ts).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
@@ -263,7 +350,12 @@ export default function ChatPage() {
               </button>
             </div>
           ))}
-          {sessions.length === 0 && !sessionsQuery.isLoading && (
+          {sessionsQuery.isError && (
+            <p className="text-xs text-status-error text-center py-4">
+              Не удалось загрузить историю
+            </p>
+          )}
+          {sessions.length === 0 && !sessionsQuery.isLoading && !sessionsQuery.isError && (
             <p className="text-xs text-secondary text-center py-4">История чатов пуста</p>
           )}
         </div>
@@ -286,7 +378,7 @@ export default function ChatPage() {
             />
           </button>
           <div className={cn("px-3 pb-3", !projectsOpen && "hidden")}>
-            <StudentProjectsPanel />
+            <StudentProjectsPanel enabled={projectsOpen} />
           </div>
         </div>
       </aside>
@@ -332,41 +424,7 @@ export default function ChatPage() {
           )}
 
           {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}
-            >
-              <div
-                className={cn(
-                  "max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed",
-                  msg.role === "user"
-                    ? "bg-primary text-on-primary rounded-br-md"
-                    : msg.failed
-                      ? "bg-status-error/10 text-status-error border border-status-error/30 rounded-bl-md"
-                      : "bg-surface-container-high text-text-main border border-border-subtle rounded-bl-md"
-                )}
-              >
-                {msg.failed && (
-                  <span className="flex items-center gap-1.5 font-semibold mb-1">
-                    <Icon name="error" className="text-base shrink-0" />
-                    Ошибка
-                  </span>
-                )}
-                <p className="whitespace-pre-wrap">{msg.content}</p>
-                <span
-                  className={cn(
-                    "text-[10px] mt-1 block",
-                    msg.role === "user"
-                      ? "text-on-primary/60"
-                      : msg.failed
-                        ? "text-status-error/60"
-                        : "text-muted-foreground"
-                  )}
-                >
-                  {formatTime(msg.createdAt)}
-                </span>
-              </div>
-            </div>
+            <MessageBubble key={msg.id} msg={msg} />
           ))}
 
           {isWaitingFirstToken && (

@@ -100,11 +100,11 @@ export async function reingestDocument(id: string): Promise<ApiResponse<KBDocume
   return { ...data, data: mapDocument(data.data) };
 }
 
+// The backend does not paginate categories — the full list is returned in `data`.
 export async function listCategories(): Promise<GrantCategory[]> {
-  const { data } = await apiClient.get<
-    ApiResponse<Record<string, unknown>[]> | PaginatedResponse<Record<string, unknown>>
-  >("/ai/kb/categories/");
-  return (Array.isArray(data.data) ? data.data : []).map(mapCategory);
+  const { data } =
+    await apiClient.get<ApiResponse<Record<string, unknown>[]>>("/ai/kb/categories/");
+  return data.data.map(mapCategory);
 }
 
 export interface CategoryPayload {

@@ -39,10 +39,12 @@ import {
   useUploadKBDocument,
 } from "@/hooks";
 import { toast } from "@/stores";
+import { extractApiError } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
 import type { GrantCategory } from "@/types";
 
 const DOCUMENT_ACCEPT = ".pdf,.docx,.md,.txt";
+const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
 interface CategoryFormState {
   id: string | null;
@@ -85,6 +87,10 @@ export function KnowledgeBaseSection() {
 
   const handleUpload = (e: React.FormEvent) => {
     e.preventDefault();
+    if (sourceMode === "file" && selectedFile && selectedFile.size > MAX_FILE_SIZE_BYTES) {
+      toast({ title: "Файл больше 20 МБ", variant: "destructive" });
+      return;
+    }
     const payload =
       sourceMode === "file"
         ? { file: selectedFile ?? undefined, title: title.trim() || undefined }
@@ -102,11 +108,10 @@ export function KnowledgeBaseSection() {
         if (fileInputRef.current) fileInputRef.current.value = "";
       },
       onError: (error) => {
-        const message = axios.isAxiosError(error)
-          ? ((error.response?.data as { message?: string } | undefined)?.message ??
-            "Не удалось загрузить документ")
-          : "Не удалось загрузить документ";
-        toast({ title: message, variant: "destructive" });
+        toast({
+          title: extractApiError(error, "Не удалось загрузить документ"),
+          variant: "destructive",
+        });
       },
     });
   };
@@ -293,7 +298,9 @@ export function KnowledgeBaseSection() {
 
       <div className="bg-surface-card rounded-xl border border-border-subtle p-6 space-y-4">
         <h3 className="text-sm font-headline font-bold">Документы</h3>
-        {documents.length === 0 && !documentsQuery.isLoading ? (
+        {documentsQuery.isError ? (
+          <p className="text-sm text-status-error">Не удалось загрузить документы</p>
+        ) : documents.length === 0 && !documentsQuery.isLoading ? (
           <p className="text-sm text-secondary">Документов пока нет</p>
         ) : (
           <Table>
