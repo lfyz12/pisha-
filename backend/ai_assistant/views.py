@@ -52,6 +52,36 @@ def _get_student(user):
         return None
 
 
+def _enqueue_ingest(task, instance):
+    """Enqueue the ingest task for ``instance``; return a 503 on broker failure.
+
+    On failure the instance is marked failed (never left pending), so the
+    one-task-per-document discipline stays intact and the user can reingest.
+    """
+    try:
+        task.delay(str(instance.id))
+    except Exception as exc:  # noqa: BLE001 - broker errors must not 500
+        logger.exception(
+            "Failed to enqueue ingest for %s %s",
+            type(instance).__name__,
+            instance.id,
+        )
+        instance.status = instance.Status.FAILED
+        instance.error = f"enqueue failed: {exc}"[:2000]
+        update_fields = ["status", "error"]
+        if hasattr(instance, "updated_at"):
+            update_fields.append("updated_at")
+        instance.save(update_fields=update_fields)
+        return Response(
+            {
+                "message": "Failed to enqueue the ingest task",
+                "status": status.HTTP_503_SERVICE_UNAVAILABLE,
+            },
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Knowledge-base documents (admin only).
 # ---------------------------------------------------------------------------
@@ -73,7 +103,10 @@ def kb_document_list_create_view(request):
     serializer = KBDocumentSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     document = serializer.save(created_by=request.user)
-    ingest_kb_document.delay(str(document.id))
+    audit_event(request, "kb_document.created", target=str(document.id))
+    enqueue_error = _enqueue_ingest(ingest_kb_document, document)
+    if enqueue_error is not None:
+        return enqueue_error
     return Response(
         {"data": KBDocumentSerializer(document).data, "status": status.HTTP_201_CREATED},
         status=status.HTTP_201_CREATED,
@@ -97,6 +130,13 @@ def kb_document_detail_view(request, pk):
             logger.exception(
                 "Failed to delete SurrealDB chunks for KB document %s", document.id
             )
+        if document.file:
+            try:
+                document.file.delete(save=False)
+            except Exception:  # noqa: BLE001 - file cleanup must not fail the request
+                logger.exception(
+                    "Failed to delete file of KB document %s", document.id
+                )
         audit_event(request, "kb_document.deleted", target=str(document.id))
         document.delete()
         return Response(
@@ -104,9 +144,18 @@ def kb_document_detail_view(request, pk):
             status=status.HTTP_204_NO_CONTENT,
         )
 
-    data = {
-        key: request.data[key] for key in ("title", "categories") if key in request.data
-    }
+    data = {}
+    if "title" in request.data:
+        data["title"] = request.data["title"]
+    if "categories" in request.data:
+        # QueryDict (multipart) needs getlist, or only the last value survives.
+        if hasattr(request.data, "getlist"):
+            data["categories"] = request.data.getlist("categories")
+        else:
+            data["categories"] = request.data["categories"]
+    if not data:
+        # Nothing whitelisted to update: a no-op, so no audit event.
+        return Response({"data": KBDocumentSerializer(document).data, "status": 200})
     serializer = KBDocumentSerializer(document, data=data, partial=True)
     serializer.is_valid(raise_exception=True)
     serializer.save()
@@ -121,10 +170,11 @@ def kb_document_reingest_view(request, pk):
         return _forbidden()
     document = get_object_or_404(KBDocument, pk=pk)
 
-    if document.status == KBDocument.Status.PROCESSING:
+    # One ingest task per document: pending (queued) or processing (running).
+    if document.status in (KBDocument.Status.PENDING, KBDocument.Status.PROCESSING):
         return Response(
             {
-                "message": "Document is already being processed",
+                "message": "An ingest task is already queued or running",
                 "status": status.HTTP_409_CONFLICT,
             },
             status=status.HTTP_409_CONFLICT,
@@ -132,7 +182,9 @@ def kb_document_reingest_view(request, pk):
     document.status = KBDocument.Status.PENDING
     document.error = ""
     document.save(update_fields=["status", "error", "updated_at"])
-    ingest_kb_document.delay(str(document.id))
+    enqueue_error = _enqueue_ingest(ingest_kb_document, document)
+    if enqueue_error is not None:
+        return enqueue_error
     audit_event(request, "kb_document.reingested", target=str(document.id))
     return Response(
         {"data": KBDocumentSerializer(document).data, "status": status.HTTP_202_ACCEPTED},
@@ -165,12 +217,15 @@ def kb_category_list_create_view(request):
     )
 
 
-@api_view(["PATCH", "DELETE"])
+@api_view(["GET", "PATCH", "DELETE"])
 @permission_classes([FullyAuthenticated])
 def kb_category_detail_view(request, pk):
     if not _is_admin(request.user):
         return _forbidden()
     category = get_object_or_404(GrantCategory, pk=pk)
+
+    if request.method == "GET":
+        return Response({"data": GrantCategorySerializer(category).data, "status": 200})
 
     if request.method == "DELETE":
         audit_event(request, "kb_category.deleted", target=str(category.id))
@@ -226,7 +281,10 @@ def project_list_create_view(request):
     serializer = StudentProjectSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     project = serializer.save(student=student)
-    process_student_project.delay(str(project.id))
+    audit_event(request, "student_project.created", target=str(project.id))
+    enqueue_error = _enqueue_ingest(process_student_project, project)
+    if enqueue_error is not None:
+        return enqueue_error
     return Response(
         {"data": StudentProjectSerializer(project).data, "status": status.HTTP_201_CREATED},
         status=status.HTTP_201_CREATED,
@@ -236,11 +294,18 @@ def project_list_create_view(request):
 @api_view(["GET", "DELETE"])
 @permission_classes([FullyAuthenticated])
 def project_detail_view(request, pk):
-    # Scoped by owner: a foreign project's existence is not disclosed.
-    project = get_object_or_404(StudentProject, pk=pk, student_id=request.user.id)
-
     if request.method == "GET":
+        # Enforce the same access gate as the list endpoint; the owner check
+        # below still scopes the project to the current student (or admin).
+        student, error = _check_project_access(request)
+        if error is not None:
+            return error
+        project = get_object_or_404(StudentProject, pk=pk, student=student)
         return Response({"data": StudentProjectSerializer(project).data, "status": 200})
+
+    # DELETE stays owner-only without the policy check: users can always delete
+    # their own data even if the AI chat feature is currently disabled.
+    project = get_object_or_404(StudentProject, pk=pk, student_id=request.user.id)
 
     try:
         delete_doc_chunks(TABLE_PROJECT_CHUNK, str(project.id))
@@ -252,6 +317,7 @@ def project_detail_view(request, pk):
         project.file.delete(save=False)
     except Exception:  # noqa: BLE001 - file cleanup must not fail the request
         logger.exception("Failed to delete file of student project %s", project.id)
+    audit_event(request, "student_project.deleted", target=str(project.id))
     project.delete()
     return Response(
         {"data": None, "status": status.HTTP_204_NO_CONTENT},

@@ -43,11 +43,11 @@ def _default_title_from_url(url):
 
 
 def _categories_field():
-    """Write categories as a list of slugs against GrantCategory."""
+    """Write categories as a list of slugs against active GrantCategory rows."""
     return serializers.SlugRelatedField(
         slug_field="slug",
         many=True,
-        queryset=GrantCategory.objects.all(),
+        queryset=GrantCategory.objects.filter(is_active=True),
         required=False,
     )
 

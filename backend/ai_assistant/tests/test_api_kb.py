@@ -1,5 +1,6 @@
 """API tests for the knowledge-base admin endpoints — external services mocked."""
 
+import os
 import shutil
 import tempfile
 from unittest.mock import patch
@@ -7,6 +8,7 @@ from unittest.mock import patch
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.utils import timezone
+from rest_framework import status
 from rest_framework.test import APIClient
 
 from ai_assistant.models import GrantCategory, KBDocument
@@ -149,6 +151,39 @@ class KBDocumentCreateTests(KBApiBaseTestCase):
         response = self.student_client.get(KB_DOCUMENTS_URL, secure=True)
         self.assertEqual(response.status_code, 403)
 
+    def test_create_emits_audit_event(self):
+        with patch.object(ingest_kb_document, "delay"):
+            response = self.admin_client.post(
+                KB_DOCUMENTS_URL,
+                {"file": self._md_file(), "title": "Audited Doc"},
+                format="multipart",
+                secure=True,
+            )
+        self.assertEqual(response.status_code, 201)
+        document = KBDocument.objects.get()
+        self.assertTrue(
+            SecurityAuditLog.objects.filter(
+                event="kb_document.created", target=str(document.id)
+            ).exists()
+        )
+
+    def test_create_enqueue_failure_returns_503_and_marks_failed(self):
+        with patch.object(
+            ingest_kb_document, "delay", side_effect=ConnectionError("broker down")
+        ):
+            response = self.admin_client.post(
+                KB_DOCUMENTS_URL,
+                {"file": self._md_file(), "title": "Enqueued Doc"},
+                format="multipart",
+                secure=True,
+            )
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.data["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertIn("message", response.data)
+        document = KBDocument.objects.get()
+        self.assertEqual(document.status, KBDocument.Status.FAILED)
+        self.assertIn("broker down", document.error)
+
 
 class KBDocumentListTests(KBApiBaseTestCase):
     def test_document_list_is_paginated(self):
@@ -218,6 +253,63 @@ class KBDocumentDetailTests(KBApiBaseTestCase):
         self.assertEqual(response.status_code, 204)
         self.assertFalse(KBDocument.objects.filter(pk=document.id).exists())
 
+    def test_delete_removes_file_from_disk(self):
+        with patch.object(ingest_kb_document, "delay"):
+            response = self.admin_client.post(
+                KB_DOCUMENTS_URL,
+                {"file": self._md_file(), "title": "File to delete"},
+                format="multipart",
+                secure=True,
+            )
+        self.assertEqual(response.status_code, 201)
+        document = KBDocument.objects.get()
+        file_path = document.file.path
+        self.assertTrue(os.path.exists(file_path))
+        with patch("ai_assistant.views.delete_doc_chunks"):
+            response = self.admin_client.delete(
+                f"{KB_DOCUMENTS_URL}{document.id}/", secure=True
+            )
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(os.path.exists(file_path))
+        self.assertFalse(KBDocument.objects.filter(pk=document.id).exists())
+
+    def test_patch_with_multipart_keeps_multiple_categories(self):
+        document = self._url_document(title="Old title")
+        response = self.admin_client.patch(
+            f"{KB_DOCUMENTS_URL}{document.id}/",
+            {"categories": ["science-grants", "startup-grants"]},
+            format="multipart",
+            secure=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        document.refresh_from_db()
+        self.assertEqual(
+            sorted(document.categories.values_list("slug", flat=True)),
+            ["science-grants", "startup-grants"],
+        )
+        self.assertEqual(len(response.data["data"]["categories"]), 2)
+        self.assertTrue(
+            SecurityAuditLog.objects.filter(
+                event="kb_document.updated", target=str(document.id)
+            ).exists()
+        )
+
+    def test_empty_patch_does_not_emit_audit(self):
+        document = self._url_document(title="Old title")
+        response = self.admin_client.patch(
+            f"{KB_DOCUMENTS_URL}{document.id}/",
+            {},
+            format="json",
+            secure=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["data"]["title"], "Old title")
+        self.assertFalse(
+            SecurityAuditLog.objects.filter(
+                event="kb_document.updated", target=str(document.id)
+            ).exists()
+        )
+
 
 class KBDocumentReingestTests(KBApiBaseTestCase):
     def test_reingest_ready_document_enqueues_task(self):
@@ -248,6 +340,18 @@ class KBDocumentReingestTests(KBApiBaseTestCase):
         mock_delay.assert_not_called()
         document.refresh_from_db()
         self.assertEqual(document.status, KBDocument.Status.PROCESSING)
+
+    def test_reingest_pending_document_conflicts(self):
+        document = self._url_document(status=KBDocument.Status.PENDING)
+        with patch.object(ingest_kb_document, "delay") as mock_delay:
+            response = self.admin_client.post(
+                f"{KB_DOCUMENTS_URL}{document.id}/reingest/", secure=True
+            )
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("message", response.data)
+        mock_delay.assert_not_called()
+        document.refresh_from_db()
+        self.assertEqual(document.status, KBDocument.Status.PENDING)
 
 
 class KBCategoryTests(KBApiBaseTestCase):
@@ -315,3 +419,26 @@ class KBCategoryTests(KBApiBaseTestCase):
                 event="kb_category.deleted", target=str(category.id)
             ).exists()
         )
+
+    def test_category_detail_get(self):
+        category = GrantCategory.objects.get(slug="science-grants")
+        response = self.admin_client.get(
+            f"{KB_CATEGORIES_URL}{category.id}/", secure=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["data"]["slug"], "science-grants")
+        self.assertEqual(response.data["data"]["name"], "Научные гранты")
+
+    def test_inactive_category_slug_is_rejected(self):
+        category = GrantCategory.objects.get(slug="science-grants")
+        category.is_active = False
+        category.save(update_fields=["is_active"])
+        with patch.object(ingest_kb_document, "delay"):
+            response = self.admin_client.post(
+                KB_DOCUMENTS_URL,
+                {"file": self._md_file(), "categories": ["science-grants"]},
+                format="multipart",
+                secure=True,
+            )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(KBDocument.objects.count(), 0)

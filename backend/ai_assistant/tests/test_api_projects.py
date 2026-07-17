@@ -12,7 +12,8 @@ from rest_framework.test import APIClient
 
 from ai_assistant.models import StudentProject
 from ai_assistant.tasks import process_student_project
-from security.models import AccessPolicy
+from rest_framework import status
+from security.models import AccessPolicy, SecurityAuditLog
 from students.models import Student
 from users.models import MfaDevice, User
 
@@ -109,6 +110,35 @@ class StudentProjectAPITests(TempMediaRootMixin, TestCase):
         self.assertEqual(response.data["status"], 201)
         mock_delay.assert_called_once_with(str(project.id))
 
+    def test_create_emits_audit_event(self):
+        self._set_allow_ai_chat(True)
+        with patch.object(process_student_project, "delay"):
+            response = self.client.post(
+                PROJECTS_URL, {"file": self._md_file()}, format="multipart", secure=True
+            )
+        self.assertEqual(response.status_code, 201)
+        project = StudentProject.objects.get()
+        self.assertTrue(
+            SecurityAuditLog.objects.filter(
+                event="student_project.created", target=str(project.id)
+            ).exists()
+        )
+
+    def test_create_enqueue_failure_returns_503_and_marks_failed(self):
+        self._set_allow_ai_chat(True)
+        with patch.object(
+            process_student_project, "delay", side_effect=ConnectionError("broker down")
+        ):
+            response = self.client.post(
+                PROJECTS_URL, {"file": self._md_file()}, format="multipart", secure=True
+            )
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.data["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertIn("message", response.data)
+        project = StudentProject.objects.get()
+        self.assertEqual(project.status, StudentProject.Status.FAILED)
+        self.assertIn("broker down", project.error)
+
     def test_upload_rejects_unsupported_extension(self):
         self._set_allow_ai_chat(True)
         with patch.object(process_student_project, "delay") as mock_delay:
@@ -151,6 +181,30 @@ class StudentProjectAPITests(TempMediaRootMixin, TestCase):
         self.assertEqual(response.status_code, 204)
         mock_delete.assert_called_once_with("project_chunk", str(project.id))
         self.assertFalse(os.path.exists(file_path))
+        self.assertFalse(StudentProject.objects.filter(pk=project.id).exists())
+
+    def test_delete_emits_audit_event(self):
+        self._set_allow_ai_chat(True)
+        project = self._project(self.student)
+        with patch("ai_assistant.views.delete_doc_chunks"):
+            response = self.client.delete(f"{PROJECTS_URL}{project.id}/", secure=True)
+        self.assertEqual(response.status_code, 204)
+        self.assertTrue(
+            SecurityAuditLog.objects.filter(
+                event="student_project.deleted", target=str(project.id)
+            ).exists()
+        )
+
+    def test_get_detail_forbidden_when_flag_off_but_delete_still_works(self):
+        self._set_allow_ai_chat(True)
+        project = self._project(self.student)
+        self._set_allow_ai_chat(False)
+        response = self.client.get(f"{PROJECTS_URL}{project.id}/", secure=True)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("message", response.data)
+        with patch("ai_assistant.views.delete_doc_chunks"):
+            response = self.client.delete(f"{PROJECTS_URL}{project.id}/", secure=True)
+        self.assertEqual(response.status_code, 204)
         self.assertFalse(StudentProject.objects.filter(pk=project.id).exists())
 
     def test_admin_without_student_profile_gets_403(self):
