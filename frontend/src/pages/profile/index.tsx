@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Icon } from "@/components/ui/icon";
+import { StudentProjectsPanel } from "@/components/student-projects-panel";
 import { useAuthStore } from "@/stores";
 import { useRatingData } from "@/hooks";
 import { cn, formatNumber } from "@/lib/utils";
@@ -374,6 +375,15 @@ export default function ProfilePage() {
               </div>
             )}
           </div>
+
+          {!isAdmin && (
+            <div className="bg-surface-card rounded-xl border border-border-subtle p-4 sm:p-6">
+              <h3 className="text-xs font-label text-secondary uppercase tracking-wider mb-4">
+                Мои проекты
+              </h3>
+              <StudentProjectsPanel />
+            </div>
+          )}
         </div>
       </section>
 

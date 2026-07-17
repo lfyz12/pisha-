@@ -8,3 +8,27 @@ export { useScholarships } from "./use-scholarships";
 export { useUploadExcel } from "./use-import";
 export { useStudentProfile } from "./use-student-profile";
 export { useRatingData } from "./use-rating-data";
+export {
+  useKBDocuments,
+  useUploadKBDocument,
+  useUpdateKBDocument,
+  useDeleteKBDocument,
+  useReingestKBDocument,
+} from "./use-kb-documents";
+export {
+  useKBCategories,
+  useCreateKBCategory,
+  useUpdateKBCategory,
+  useDeleteKBCategory,
+} from "./use-kb-categories";
+export {
+  useStudentProjects,
+  useUploadStudentProject,
+  useDeleteStudentProject,
+} from "./use-student-projects";
+export {
+  useChatSessions,
+  useChatMessages,
+  useCreateChatSession,
+  useDeleteChatSession,
+} from "./use-chat-sessions";

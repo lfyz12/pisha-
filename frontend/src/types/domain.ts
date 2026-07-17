@@ -126,11 +126,58 @@ export interface Scholarship {
   isAvailable: boolean;
 }
 
+export type IngestionStatus = "pending" | "processing" | "ready" | "failed";
+
+export interface CategoryRef {
+  slug: string;
+  name: string;
+}
+
+export interface GrantCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  isActive: boolean;
+}
+
+export interface KBDocument {
+  id: string;
+  title: string;
+  sourceType: "file" | "url";
+  sourceUrl: string | null;
+  status: IngestionStatus;
+  error: string | null;
+  summary: string | null;
+  categories: CategoryRef[];
+  chunkCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StudentProject {
+  id: string;
+  title: string;
+  status: IngestionStatus;
+  error: string | null;
+  summary: string | null;
+  categories: CategoryRef[];
+  chunkCount: number;
+  createdAt: string;
+}
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
-  text: string;
-  timestamp: string;
+  content: string;
+  createdAt: string;
 }
 
 export interface ScholarshipFilter {
