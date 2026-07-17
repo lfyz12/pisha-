@@ -96,7 +96,7 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "static"
 
-MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "/app/media")
+MEDIA_ROOT = os.environ.get("MEDIA_ROOT", BASE_DIR / "media")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -156,8 +156,10 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
-FILE_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
+# Single source of truth for upload size limits; also caps AI assistant file uploads.
+AI_MAX_UPLOAD_MB = int(os.environ.get("AI_MAX_UPLOAD_MB", "20"))
+DATA_UPLOAD_MAX_MEMORY_SIZE = AI_MAX_UPLOAD_MB * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = AI_MAX_UPLOAD_MB * 1024 * 1024
 MAX_EXCEL_UPLOAD_BYTES = 10 * 1024 * 1024
 MAX_EXCEL_ARCHIVE_FILES = 200
 MAX_EXCEL_UNCOMPRESSED_BYTES = 50 * 1024 * 1024
@@ -188,7 +190,7 @@ SURREALDB_URL = os.environ.get("SURREALDB_URL", "ws://localhost:8000")
 SURREALDB_NS = os.environ.get("SURREALDB_NS", "pisha")
 SURREALDB_DB = os.environ.get("SURREALDB_DB", "pisha")
 SURREALDB_USER = os.environ.get("SURREALDB_USER", "root")
-SURREALDB_PASS = os.environ.get("SURREALDB_PASS", "")
+# Accept both variable names; docker-compose passes SURREALDB_PASS, .env SURREALDB_PASSWORD.
+SURREALDB_PASS = os.environ.get("SURREALDB_PASS") or os.environ.get("SURREALDB_PASSWORD", "")
 
 AI_EMBEDDING_DIM = int(os.environ.get("AI_EMBEDDING_DIM", "1536"))
-AI_MAX_UPLOAD_MB = int(os.environ.get("AI_MAX_UPLOAD_MB", "20"))
