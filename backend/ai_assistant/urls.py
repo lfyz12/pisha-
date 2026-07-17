@@ -24,4 +24,20 @@ urlpatterns = [
     ),
     path("projects/", views.project_list_create_view, name="projects"),
     path("projects/<uuid:pk>/", views.project_detail_view, name="project-detail"),
+    path("chat/sessions/", views.chat_session_list_create_view, name="chat-sessions"),
+    path(
+        "chat/sessions/<uuid:pk>/",
+        views.chat_session_delete_view,
+        name="chat-session-detail",
+    ),
+    path(
+        "chat/sessions/<uuid:pk>/messages/",
+        views.chat_message_list_view,
+        name="chat-messages",
+    ),
+    path(
+        "chat/sessions/<uuid:pk>/messages/stream/",
+        views.chat_stream_view,
+        name="chat-stream",
+    ),
 ]

@@ -1,27 +1,31 @@
-"""API views for the AI assistant knowledge base and student projects.
+"""API views for the AI assistant knowledge base, student projects and chat.
 
 Function-based views in the style of ai_rules.views: success responses use
 the ``{data, status}`` envelope (paginated lists use AppPagination), errors
-use ``{message, status}``. KB documents and categories are admin-only;
-student projects are available to admins and, once
-``AccessPolicy.allow_ai_chat`` is enabled, to students with a Student
-profile. Ingest tasks are enqueued via Celery; SurrealDB chunk cleanup on
-delete is best-effort and never fails the request.
+use ``{message, status}``. The SSE stream endpoint is the only one that does
+not wrap its output in the envelope.
 """
 
+import json
 import logging
+import queue
+import threading
 
+from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
+from langchain_core.messages import AIMessage, HumanMessage
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 
 from pisha_backend.pagination import AppPagination
 from security.models import AccessPolicy, audit_event
 from students.models import Student
 from users.permissions import FullyAuthenticated
 
-from .models import GrantCategory, KBDocument, StudentProject
+from .agent.graph import build_agent
+from .models import ChatMessage, ChatSession, GrantCategory, KBDocument, StudentProject
 from .serializers import (
     GrantCategorySerializer,
     KBDocumentSerializer,
@@ -323,3 +327,184 @@ def project_detail_view(request, pk):
         {"data": None, "status": status.HTTP_204_NO_CONTENT},
         status=status.HTTP_204_NO_CONTENT,
     )
+
+
+# ---------------------------------------------------------------------------
+# Chat sessions and SSE streaming.
+# ---------------------------------------------------------------------------
+
+
+def _serialize_session(session):
+    return {
+        "id": str(session.id),
+        "title": session.title,
+        "created_at": session.created_at.isoformat(),
+        "updated_at": session.updated_at.isoformat(),
+    }
+
+
+def _serialize_message(message):
+    return {
+        "id": str(message.id),
+        "role": message.role,
+        "content": message.content,
+        "created_at": message.created_at.isoformat(),
+    }
+
+
+def _get_student_or_403(user):
+    """Return the Student profile or a 403 error response."""
+    try:
+        return Student.objects.get(pk=user.id), None
+    except Student.DoesNotExist:
+        return None, _forbidden("No student profile for this account")
+
+
+@api_view(["GET", "POST"])
+@permission_classes([FullyAuthenticated])
+def chat_session_list_create_view(request):
+    student, error = _get_student_or_403(request.user)
+    if error is not None:
+        return error
+
+    if request.method == "GET":
+        sessions = ChatSession.objects.filter(student=student)
+        paginator = AppPagination()
+        page = paginator.paginate_queryset(sessions, request)
+        data = [_serialize_session(s) for s in page]
+        return paginator.get_paginated_response(data)
+
+    title = str(request.data.get("title", "Новый чат")).strip()[:100]
+    session = ChatSession.objects.create(student=student, title=title)
+    return Response(
+        {"data": _serialize_session(session), "status": status.HTTP_201_CREATED},
+        status=status.HTTP_201_CREATED,
+    )
+
+
+@api_view(["DELETE"])
+@permission_classes([FullyAuthenticated])
+def chat_session_delete_view(request, pk):
+    student, error = _get_student_or_403(request.user)
+    if error is not None:
+        return error
+    session = get_object_or_404(ChatSession, pk=pk, student=student)
+    session.messages.all().delete()
+    session.delete()
+    return Response(
+        {"data": None, "status": status.HTTP_204_NO_CONTENT},
+        status=status.HTTP_204_NO_CONTENT,
+    )
+
+
+@api_view(["GET"])
+@permission_classes([FullyAuthenticated])
+def chat_message_list_view(request, pk):
+    student, error = _get_student_or_403(request.user)
+    if error is not None:
+        return error
+    session = get_object_or_404(ChatSession, pk=pk, student=student)
+    messages = session.messages.order_by("created_at")[:100]
+    data = [_serialize_message(m) for m in messages]
+    return Response({"data": data, "status": 200})
+
+
+@api_view(["POST"])
+@permission_classes([FullyAuthenticated])
+@throttle_classes([ScopedRateThrottle])
+def chat_stream_view(request, pk):
+    """Stream the assistant response for a chat session via SSE."""
+    student, error = _get_student_or_403(request.user)
+    if error is not None:
+        return error
+
+    if not (_is_admin(request.user) or AccessPolicy.current().allow_ai_chat):
+        return _forbidden("AI chat is disabled")
+
+    session = get_object_or_404(ChatSession, pk=pk, student=student)
+
+    content = str(request.data.get("content", "")).strip()
+    if not content:
+        return Response(
+            {"message": "Message content is required", "status": status.HTTP_400_BAD_REQUEST},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    ChatMessage.objects.create(
+        session=session, role=ChatMessage.Role.USER, content=content
+    )
+
+    history_messages = []
+    for msg in session.messages.order_by("created_at")[:20]:
+        if msg.role == ChatMessage.Role.USER:
+            history_messages.append(HumanMessage(content=msg.content))
+        elif msg.role == ChatMessage.Role.ASSISTANT:
+            history_messages.append(AIMessage(content=msg.content))
+
+    ready_projects = list(
+        StudentProject.objects.filter(student=student, status=StudentProject.Status.READY)
+        .prefetch_related("categories")
+    )
+    project_summaries = [
+        {
+            "title": project.title,
+            "summary": project.summary,
+            "categories": [cat.name for cat in project.categories.all()],
+        }
+        for project in ready_projects
+    ]
+
+    graph = build_agent(student, project_summaries)
+    input_messages = history_messages
+
+    q: queue.Queue = queue.Queue()
+
+    def run_agent():
+        try:
+            for msg, _metadata in graph.stream(
+                {"messages": input_messages}, stream_mode="messages"
+            ):
+                token = ""
+                if isinstance(msg.content, str):
+                    token = msg.content
+                elif isinstance(msg.content, list):
+                    token = "".join(str(p) for p in msg.content)
+                if token:
+                    q.put(("token", token))
+            q.put(("done", None))
+        except Exception as exc:  # noqa: BLE001 - stream errors are reported via SSE
+            logger.exception("Agent stream failed for session %s", session.id)
+            q.put(("error", str(exc)))
+
+    thread = threading.Thread(target=run_agent, daemon=True)
+    thread.start()
+
+    def event_stream():
+        full_text = ""
+        while True:
+            kind, payload = q.get()
+            if kind == "token":
+                full_text += payload
+                yield (
+                    f"data: {json.dumps({'type': 'token', 'content': payload}, ensure_ascii=False, separators=(',', ':'))}\n\n"
+                )
+            elif kind == "done":
+                ChatMessage.objects.create(
+                    session=session,
+                    role=ChatMessage.Role.ASSISTANT,
+                    content=full_text,
+                )
+                yield (
+                    f"data: {json.dumps({'type': 'done', 'content': full_text}, ensure_ascii=False, separators=(',', ':'))}\n\n"
+                )
+                break
+            elif kind == "error":
+                yield (
+                    f"data: {json.dumps({'type': 'error', 'message': str(payload)}, ensure_ascii=False, separators=(',', ':'))}\n\n"
+                )
+                break
+
+    return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
+
+
+chat_stream_view.throttle_scope = "ai_chat"
