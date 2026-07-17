@@ -3,14 +3,16 @@
 import shutil
 import tempfile
 import uuid
+from datetime import timedelta
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import httpx
 from celery.exceptions import Retry
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 
+from ai_assistant import tasks
 from ai_assistant.models import KBDocument, StudentProject
 from ai_assistant.services.parsing import DocumentParsingError
 from ai_assistant.tasks import (
@@ -40,6 +42,37 @@ def _embeddings_mock(get_embeddings):
         lambda chunks: [[0.1, 0.2]] * len(chunks)
     )
     return get_embeddings.return_value
+
+
+def _task_self(retries):
+    """Fake bound-task object: a request stub plus a retry that raises."""
+    return SimpleNamespace(
+        request=SimpleNamespace(retries=retries),
+        retry=Mock(side_effect=Retry("retry later")),
+    )
+
+
+class RetryableErrorsTests(SimpleTestCase):
+    def test_external_connection_errors_are_retryable(self):
+        from openai import (
+            APIConnectionError,
+            APITimeoutError,
+            InternalServerError,
+            RateLimitError,
+        )
+        from surrealdb.errors import ConnectionUnavailableError
+        from websockets.exceptions import ConnectionClosed
+
+        for exc_type in (
+            APIConnectionError,
+            APITimeoutError,
+            InternalServerError,
+            RateLimitError,
+            ConnectionClosed,
+            ConnectionUnavailableError,
+            httpx.HTTPError,  # parent of TransportError/HTTPStatusError
+        ):
+            self.assertIn(exc_type, tasks._RETRYABLE_ERRORS)
 
 
 @patch("ai_assistant.tasks.upsert_chunks")
@@ -101,6 +134,39 @@ class IngestTaskTests(TempMediaRootMixin, TestCase):
         self.assertEqual(len(chunks), doc.chunk_count)
         self.assertEqual(len(vectors), len(chunks))
 
+    def test_ready_is_saved_only_after_successful_upsert(
+        self, classify, get_embeddings, upsert
+    ):
+        doc = self._make_kb_doc()
+        classify.return_value = {"summary": "Саммари.", "categories": []}
+        _embeddings_mock(get_embeddings)
+        seen = {}
+
+        def _upsert(table, doc_id, meta, chunks, vectors):
+            seen["status_at_upsert"] = KBDocument.objects.get(id=doc_id).status
+
+        upsert.side_effect = _upsert
+
+        ingest_kb_document.run(str(doc.id))
+
+        self.assertEqual(seen["status_at_upsert"], KBDocument.Status.PROCESSING)
+        doc.refresh_from_db()
+        self.assertEqual(doc.status, KBDocument.Status.READY)
+
+    def test_ingest_bumps_updated_at(self, classify, get_embeddings, upsert):
+        doc = self._make_kb_doc()
+        KBDocument.objects.filter(id=doc.id).update(
+            updated_at=doc.updated_at - timedelta(days=1)
+        )
+        past = KBDocument.objects.get(id=doc.id).updated_at
+        classify.return_value = {"summary": "Саммари.", "categories": []}
+        _embeddings_mock(get_embeddings)
+
+        ingest_kb_document.run(str(doc.id))
+
+        doc.refresh_from_db()
+        self.assertGreater(doc.updated_at, past)
+
     def test_ingest_kb_document_from_url(self, classify, get_embeddings, upsert):
         doc = KBDocument.objects.create(
             title="URL doc",
@@ -161,25 +227,25 @@ class IngestTaskTests(TempMediaRootMixin, TestCase):
 
     def test_empty_text_is_an_ingest_error(self, classify, get_embeddings, upsert):
         doc = self._make_kb_doc(content=b"   ")
-        classify.return_value = {"summary": "", "categories": []}
 
         ingest_kb_document.run(str(doc.id))
 
         doc.refresh_from_db()
         self.assertEqual(doc.status, KBDocument.Status.FAILED)
         self.assertIn("no extractable text", doc.error)
+        # Cheap failure: chunking runs before any LLM call.
+        classify.assert_not_called()
         upsert.assert_not_called()
 
-    def test_transient_error_triggers_retry(self, classify, get_embeddings, upsert):
+    def test_transient_embeddings_error_triggers_retry(
+        self, classify, get_embeddings, upsert
+    ):
         doc = self._make_kb_doc()
         classify.return_value = {"summary": "Саммари.", "categories": []}
         get_embeddings.return_value.embed_documents.side_effect = httpx.ConnectError(
             "gateway down"
         )
-        task_self = SimpleNamespace(
-            request=SimpleNamespace(retries=0),
-            retry=Mock(side_effect=Retry("retry later")),
-        )
+        task_self = _task_self(retries=0)
 
         with self.assertRaises(Retry):
             _run_ingest(task_self, doc, table="kb_chunk", build_meta=Mock())
@@ -190,6 +256,52 @@ class IngestTaskTests(TempMediaRootMixin, TestCase):
         self.assertEqual(doc.status, KBDocument.Status.PROCESSING)
         upsert.assert_not_called()
 
+    def test_second_retry_doubles_countdown(self, classify, get_embeddings, upsert):
+        doc = self._make_kb_doc()
+        classify.return_value = {"summary": "Саммари.", "categories": []}
+        get_embeddings.return_value.embed_documents.side_effect = httpx.ConnectError(
+            "gateway down"
+        )
+        task_self = _task_self(retries=1)
+
+        with self.assertRaises(Retry):
+            _run_ingest(task_self, doc, table="kb_chunk", build_meta=Mock())
+
+        self.assertEqual(task_self.retry.call_args.kwargs["countdown"], 60)
+
+    def test_transient_upsert_error_triggers_retry_status_stays_processing(
+        self, classify, get_embeddings, upsert
+    ):
+        doc = self._make_kb_doc()
+        classify.return_value = {"summary": "Саммари.", "categories": []}
+        _embeddings_mock(get_embeddings)
+        upsert.side_effect = httpx.ConnectError("surreal gateway down")
+        task_self = _task_self(retries=0)
+
+        with self.assertRaises(Retry):
+            _run_ingest(task_self, doc, table="kb_chunk", build_meta=Mock())
+
+        task_self.retry.assert_called_once()
+        doc.refresh_from_db()
+        # Not ready: the chunks never made it into SurrealDB.
+        self.assertEqual(doc.status, KBDocument.Status.PROCESSING)
+        self.assertEqual(doc.chunk_count, 0)
+        self.assertEqual(doc.summary, "")
+
+    def test_non_retryable_upsert_error_marks_failed(
+        self, classify, get_embeddings, upsert
+    ):
+        doc = self._make_kb_doc()
+        classify.return_value = {"summary": "Саммари.", "categories": []}
+        _embeddings_mock(get_embeddings)
+        upsert.side_effect = ValueError("chunks and vectors length mismatch")
+
+        ingest_kb_document.run(str(doc.id))  # must not raise or retry
+
+        doc.refresh_from_db()
+        self.assertEqual(doc.status, KBDocument.Status.FAILED)
+        self.assertIn("length mismatch", doc.error)
+
     def test_transient_error_fails_after_retries_exhausted(
         self, classify, get_embeddings, upsert
     ):
@@ -198,10 +310,7 @@ class IngestTaskTests(TempMediaRootMixin, TestCase):
         get_embeddings.return_value.embed_documents.side_effect = httpx.ConnectError(
             "gateway down"
         )
-        task_self = SimpleNamespace(
-            request=SimpleNamespace(retries=2),
-            retry=Mock(side_effect=Retry("retry later")),
-        )
+        task_self = _task_self(retries=2)
 
         _run_ingest(task_self, doc, table="kb_chunk", build_meta=Mock())
 
