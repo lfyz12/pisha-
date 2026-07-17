@@ -14,6 +14,7 @@ class AccessPolicy(models.Model):
     allow_other_activities = models.BooleanField(default=False)
     allow_scoring_logs = models.BooleanField(default=False)
     allow_ai_rules = models.BooleanField(default=False)
+    allow_ai_chat = models.BooleanField(default=False)
     allow_global_notifications = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 
