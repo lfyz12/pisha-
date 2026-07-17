@@ -20,6 +20,7 @@ COPY . ./
 RUN python manage.py collectstatic --noinput
 
 RUN addgroup --system app && adduser --system --ingroup app app \
+    && mkdir -p /app/media \
     && chown -R app:app /app
 
 USER app
