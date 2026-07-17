@@ -1,14 +1,16 @@
 """Tests for the AI assistant chat sessions and SSE streaming endpoint."""
 
 from datetime import timedelta
+import threading
 from unittest.mock import MagicMock, patch
 
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 from langchain_core.messages import AIMessage
 from rest_framework.test import APIClient
 
 from ai_assistant.models import ChatMessage, ChatSession
+from ai_assistant.services.chat_stream import sse_stream
 from security.models import AccessPolicy
 from students.models import Student
 from users.models import MfaDevice, User
@@ -142,7 +144,9 @@ class ChatSessionTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
 
-class ChatStreamTests(TestCase):
+class ChatStreamTests(TransactionTestCase):
+    # TransactionTestCase: the agent thread writes assistant messages from its
+    # own DB connection, which cannot see TestCase's uncommitted transaction.
     def setUp(self):
         self.user, self.student = _make_student_user("stream-student")
         self.other_user, self.other_student = _make_student_user("stream-other")
@@ -194,6 +198,8 @@ class ChatStreamTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/event-stream")
+        self.assertEqual(response["Cache-Control"], "no-cache")
+        self.assertEqual(response["X-Accel-Buffering"], "no")
 
         body = b"".join(response.streaming_content).decode("utf-8")
         self.assertIn('"type":"token"', body)
@@ -253,6 +259,98 @@ class ChatStreamTests(TestCase):
                 url, {"content": "hi"}, format="json", secure=True
             )
             statuses.append(response.status_code)
+            if response.status_code == 200:
+                # Consume so agent threads finish sequentially (SQLite in the
+                # test DB serializes writers; concurrent writes would lock).
+                b"".join(response.streaming_content)
 
         self.assertEqual(statuses.count(200), 30)
         self.assertEqual(statuses[-1], 429)
+
+    @patch("ai_assistant.views.build_agent")
+    def test_agent_build_failure_returns_503_without_saving_message(
+        self, mock_build_agent
+    ):
+        mock_build_agent.side_effect = RuntimeError("llm config missing")
+        session = ChatSession.objects.create(student=self.student)
+        response = self.client.post(
+            self._stream_url(session), {"content": "hi"}, format="json", secure=True
+        )
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("message", response.data)
+        self.assertEqual(ChatMessage.objects.count(), 0)
+
+    def test_stream_rejects_content_over_limit(self):
+        session = ChatSession.objects.create(student=self.student)
+        response = self.client.post(
+            self._stream_url(session),
+            {"content": "x" * 4001},
+            format="json",
+            secure=True,
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("message", response.data)
+        self.assertEqual(ChatMessage.objects.count(), 0)
+
+    @patch("ai_assistant.views.build_agent")
+    def test_stream_emits_error_frame_on_agent_error(self, mock_build_agent):
+        session = ChatSession.objects.create(student=self.student)
+        mock_graph = MagicMock()
+        mock_graph.stream.side_effect = RuntimeError("boom")
+        mock_build_agent.return_value = mock_graph
+
+        response = self.client.post(
+            self._stream_url(session), {"content": "hi"}, format="json", secure=True
+        )
+        self.assertEqual(response.status_code, 200)
+
+        body = b"".join(response.streaming_content).decode("utf-8")
+        self.assertIn('"type":"error"', body)
+
+        # The user message was saved; no assistant text was produced or saved.
+        roles = list(
+            session.messages.order_by("created_at").values_list("role", flat=True)
+        )
+        self.assertEqual(roles, [ChatMessage.Role.USER])
+
+
+class ChatStreamServiceTests(TransactionTestCase):
+    """Unit tests for the SSE stream machinery itself (agent thread writes)."""
+
+    def setUp(self):
+        self.user, self.student = _make_student_user("svc-stream-student")
+        self.session = ChatSession.objects.create(student=self.student)
+
+    def test_disconnect_saves_partial_assistant_text(self):
+        gate = threading.Event()
+        finalized = threading.Event()
+
+        def fake_stream(*_args, **_kwargs):
+            yield (AIMessage(content="partial"), {})
+            gate.wait(5)
+            yield (AIMessage(content=" more"), {})
+
+        graph = MagicMock()
+        graph.stream.side_effect = fake_stream
+
+        def on_finalize(text):
+            if text:
+                ChatMessage.objects.create(
+                    session=self.session,
+                    role=ChatMessage.Role.ASSISTANT,
+                    content=text,
+                )
+            finalized.set()
+
+        stream = sse_stream(graph, [], on_finalize)
+        first_frame = next(stream)
+        self.assertIn("partial", first_frame)
+
+        # Client disconnects: the generator is closed, the agent thread is
+        # signalled to stop between chunks and saves what it accumulated.
+        stream.close()
+        gate.set()
+        self.assertTrue(finalized.wait(5))
+
+        assistant = ChatMessage.objects.get(role=ChatMessage.Role.ASSISTANT)
+        self.assertEqual(assistant.content, "partial")

@@ -6,18 +6,14 @@ use ``{message, status}``. The SSE stream endpoint is the only one that does
 not wrap its output in the envelope.
 """
 
-import json
 import logging
-import queue
-import threading
 
 from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
-from langchain_core.messages import AIMessage, HumanMessage
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.throttling import UserRateThrottle
 
 from pisha_backend.pagination import AppPagination
 from security.models import AccessPolicy, audit_event
@@ -31,6 +27,7 @@ from .serializers import (
     KBDocumentSerializer,
     StudentProjectSerializer,
 )
+from .services.chat_stream import SSE_HEADERS, build_history, sse_stream
 from .services.surreal import TABLE_KB_CHUNK, TABLE_PROJECT_CHUNK, delete_doc_chunks
 from .tasks import ingest_kb_document, process_student_project
 
@@ -41,17 +38,10 @@ def _is_admin(user):
     return getattr(user, "role", None) == "admin" or getattr(user, "is_staff", False)
 
 
-class AIChatScopedRateThrottle(ScopedRateThrottle):
-    """Scoped rate throttle with the ``ai_chat`` scope hardcoded."""
+class AIChatRateThrottle(UserRateThrottle):
+    """Per-user rate throttle for the chat stream, scope ``ai_chat``."""
 
     scope = "ai_chat"
-
-    def __init__(self):
-        self.rate = self.get_rate()
-        self.num_requests, self.duration = self.parse_rate(self.rate)
-
-    def allow_request(self, request, view):
-        return super(ScopedRateThrottle, self).allow_request(request, view)
 
 
 def _forbidden(message="Not permitted"):
@@ -346,6 +336,9 @@ def project_detail_view(request, pk):
 # Chat sessions and SSE streaming.
 # ---------------------------------------------------------------------------
 
+#: Maximum accepted length of a single chat message body.
+CHAT_CONTENT_MAX_LENGTH = 4000
+
 
 def _serialize_session(session):
     return {
@@ -415,7 +408,7 @@ def chat_session_delete_view(request, pk):
     if error is not None:
         return error
     session = get_object_or_404(ChatSession, pk=pk, student=student)
-    session.messages.all().delete()
+    # Messages are removed by the ON DELETE CASCADE on ChatMessage.session.
     session.delete()
     return Response(
         {"data": None, "status": status.HTTP_204_NO_CONTENT},
@@ -440,7 +433,7 @@ def chat_message_list_view(request, pk):
 
 @api_view(["POST"])
 @permission_classes([FullyAuthenticated])
-@throttle_classes([AIChatScopedRateThrottle])
+@throttle_classes([AIChatRateThrottle])
 def chat_stream_view(request, pk):
     """Stream the assistant response for a chat session via SSE."""
     student, error = _get_student_or_403(request.user)
@@ -459,18 +452,11 @@ def chat_stream_view(request, pk):
             {"message": "Message content is required", "status": status.HTTP_400_BAD_REQUEST},
             status=status.HTTP_400_BAD_REQUEST,
         )
-
-    ChatMessage.objects.create(
-        session=session, role=ChatMessage.Role.USER, content=content
-    )
-
-    history_messages = []
-    recent = list(session.messages.order_by("-created_at")[:20])[::-1]
-    for msg in recent:
-        if msg.role == ChatMessage.Role.USER:
-            history_messages.append(HumanMessage(content=msg.content))
-        elif msg.role == ChatMessage.Role.ASSISTANT:
-            history_messages.append(AIMessage(content=msg.content))
+    if len(content) > CHAT_CONTENT_MAX_LENGTH:
+        return Response(
+            {"message": "Message content is too long", "status": status.HTTP_400_BAD_REQUEST},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     ready_projects = list(
         StudentProject.objects.filter(student=student, status=StudentProject.Status.READY)
@@ -485,54 +471,39 @@ def chat_stream_view(request, pk):
         for project in ready_projects
     ]
 
-    graph = build_agent(student, project_summaries)
-    input_messages = history_messages
+    # Build the agent (and its student card) before persisting anything: if
+    # agent construction fails, the user message must not be saved.
+    try:
+        graph = build_agent(student, project_summaries)
+    except Exception:  # noqa: BLE001 - the stream has not started yet; 503 is safe
+        logger.exception("Failed to build agent for session %s", session.id)
+        return Response(
+            {
+                "message": "AI assistant is temporarily unavailable",
+                "status": status.HTTP_503_SERVICE_UNAVAILABLE,
+            },
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
 
-    q: queue.Queue = queue.Queue()
+    ChatMessage.objects.create(
+        session=session, role=ChatMessage.Role.USER, content=content
+    )
+    session.save(update_fields=["updated_at"])
 
-    def run_agent():
-        try:
-            for msg, _metadata in graph.stream(
-                {"messages": input_messages}, stream_mode="messages"
-            ):
-                token = ""
-                if isinstance(msg.content, str):
-                    token = msg.content
-                elif isinstance(msg.content, list):
-                    token = "".join(str(p) for p in msg.content)
-                if token:
-                    q.put(("token", token))
-            q.put(("done", None))
-        except Exception as exc:  # noqa: BLE001 - stream errors are reported via SSE
-            logger.exception("Agent stream failed for session %s", session.id)
-            q.put(("error", str(exc)))
+    recent = list(session.messages.order_by("-created_at")[:20])[::-1]
+    input_messages = build_history(recent)
 
-    thread = threading.Thread(target=run_agent, daemon=True)
-    thread.start()
+    def save_assistant_message(text):
+        """Persist the full or partial assistant reply, if any text arrived."""
+        if not text:
+            return
+        ChatMessage.objects.create(
+            session=session, role=ChatMessage.Role.ASSISTANT, content=text
+        )
+        session.save(update_fields=["updated_at"])
 
-    def event_stream():
-        full_text = ""
-        while True:
-            kind, payload = q.get()
-            if kind == "token":
-                full_text += payload
-                yield (
-                    f"data: {json.dumps({'type': 'token', 'content': payload}, ensure_ascii=False, separators=(',', ':'))}\n\n"
-                )
-            elif kind == "done":
-                ChatMessage.objects.create(
-                    session=session,
-                    role=ChatMessage.Role.ASSISTANT,
-                    content=full_text,
-                )
-                yield (
-                    f"data: {json.dumps({'type': 'done', 'content': full_text}, ensure_ascii=False, separators=(',', ':'))}\n\n"
-                )
-                break
-            elif kind == "error":
-                yield (
-                    f"data: {json.dumps({'type': 'error', 'message': str(payload)}, ensure_ascii=False, separators=(',', ':'))}\n\n"
-                )
-                break
-
-    return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
+    stream = sse_stream(graph, input_messages, save_assistant_message)
+    response = StreamingHttpResponse(stream, content_type="text/event-stream")
+    for header, value in SSE_HEADERS.items():
+        response[header] = value
+    return response

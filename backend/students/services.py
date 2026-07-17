@@ -4,6 +4,8 @@ These functions are used both by the REST views and by the AI assistant tools
 so that the agent and the API share the same calculation logic.
 """
 
+from django.db.models import Avg, Max
+
 from students.models import Activity, Attendance, Event, Student
 
 
@@ -82,8 +84,6 @@ def get_student_rating(user, students=None):
 
 def get_dashboard_metrics():
     """Return the top-level dashboard metrics."""
-    from django.db.models import Avg
-
     total = Student.objects.count()
     avg_gpa = Student.objects.aggregate(avg=Avg("average_score"))["avg"] or 0
 
@@ -134,8 +134,6 @@ def get_gpa_distribution():
 
 def get_attendance_trends():
     """Return weekly attendance averages."""
-    from django.db.models import Max
-
     max_week = Attendance.objects.aggregate(
         max_week=Max("week_index")
     )["max_week"]

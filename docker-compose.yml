@@ -91,7 +91,7 @@ services:
     command: >
       sh -c "python manage.py migrate &&
              python manage.py seed_database &&
-             gunicorn --bind 0.0.0.0:8000 pisha_backend.wsgi:application"
+             gunicorn --bind 0.0.0.0:8000 --workers 2 --worker-class gthread --threads 8 pisha_backend.wsgi:application"
 
   celery-worker:
     build: ./backend

@@ -8,6 +8,7 @@ bound ``student`` is captured in each closure.
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 from django.db.models import Count, Q
@@ -24,8 +25,13 @@ from students.services import (
 )
 from users.models import User
 
+logger = logging.getLogger(__name__)
 
 _RESULT_SEPARATORS = (",", ":")
+
+#: Static error text returned to the model when KB search fails; details go to
+#: the logs, never into the model context.
+KB_SEARCH_ERROR = "knowledge base search temporarily unavailable"
 
 
 def _json_compact(value: Any) -> str:
@@ -81,7 +87,7 @@ def make_tools(student):
                 query_text = " ".join(summaries) if summaries else ""
 
             if not query_text:
-                return _json_compact([])
+                return _json_compact({"results": [], "error": None})
 
             vector = get_embeddings().embed_query(query_text)
             rows = surreal.search(
@@ -97,13 +103,14 @@ def make_tools(student):
                 doc_id = str(row.get("doc_id", ""))
                 if not doc_id or doc_id in docs_by_id:
                     continue
-                try:
-                    docs_by_id[doc_id] = KBDocument.objects.get(pk=doc_id)
-                except KBDocument.DoesNotExist:
-                    continue
+                doc = KBDocument.objects.filter(
+                    pk=doc_id, status=KBDocument.Status.READY
+                ).first()
+                if doc is not None:
+                    docs_by_id[doc_id] = doc
 
             if not docs_by_id:
-                return _json_compact([])
+                return _json_compact({"results": [], "error": None})
 
             doc_list = list(docs_by_id.values())
             candidate_texts = [
@@ -122,9 +129,10 @@ def make_tools(student):
                         "source_url": doc.source_url,
                     }
                 )
-            return _json_compact(results)
-        except Exception as exc:  # noqa: BLE001 - tools must not crash the agent
-            return _json_compact({"error": f"search failed: {exc}"})
+            return _json_compact({"results": results, "error": None})
+        except Exception:  # noqa: BLE001 - tools must not crash the agent
+            logger.exception("search_grants failed")
+            return _json_compact({"results": [], "error": KB_SEARCH_ERROR})
 
     @tool
     def list_grant_categories() -> str:

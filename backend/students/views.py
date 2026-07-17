@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from users.permissions import AdminFullyAuthenticated, FullyAuthenticated
 from security.models import AccessPolicy
 
-from .models import Activity, Student
+from .models import Student
 from .serializers import (
     StudentProfileSerializer,
     StudentSerializer,

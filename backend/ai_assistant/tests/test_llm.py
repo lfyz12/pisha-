@@ -30,6 +30,7 @@ class ClientFactoryTests(SimpleTestCase):
             api_key=settings.LITELLM_API_KEY,
             model=settings.LITELLM_CHAT_MODEL,
             streaming=True,
+            timeout=120,
         )
 
     @patch("ai_assistant.services.llm.ChatOpenAI")

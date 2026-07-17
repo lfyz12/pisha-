@@ -141,9 +141,42 @@ class AgentToolTests(TestCase):
 
         result = self.tools["search_grants"].invoke({"query": "grant"})
         data = json.loads(result)
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]["title"], "Grant A")
-        self.assertEqual(data[0]["source_url"], "https://example.com/a")
+        self.assertIsNone(data["error"])
+        self.assertEqual(len(data["results"]), 1)
+        self.assertEqual(data["results"][0]["title"], "Grant A")
+        self.assertEqual(data["results"][0]["source_url"], "https://example.com/a")
+
+    @patch("ai_assistant.agent.tools.rerank")
+    @patch("ai_assistant.agent.tools.surreal.search")
+    @patch("ai_assistant.agent.tools.get_embeddings")
+    def test_search_grants_skips_non_ready_documents(
+        self, mock_get_embeddings, mock_search, mock_rerank
+    ):
+        mock_get_embeddings.return_value.embed_query.return_value = [0.1] * 1536
+        doc = KBDocument.objects.create(
+            title="Pending grant",
+            source_type=KBDocument.SourceType.URL,
+            source_url="https://example.com/pending",
+            summary="not ready yet",
+            status=KBDocument.Status.PROCESSING,
+        )
+        mock_search.return_value = [{"doc_id": str(doc.id), "text": "chunk"}]
+        mock_rerank.return_value = []
+
+        result = self.tools["search_grants"].invoke({"query": "grant"})
+        data = json.loads(result)
+        self.assertIsNone(data["error"])
+        self.assertEqual(data["results"], [])
+        mock_rerank.assert_not_called()
+
+    @patch("ai_assistant.agent.tools.get_embeddings")
+    def test_search_grants_returns_error_envelope_on_failure(self, mock_embeddings):
+        mock_embeddings.return_value.embed_query.side_effect = RuntimeError("down")
+
+        result = self.tools["search_grants"].invoke({"query": "grant"})
+        data = json.loads(result)
+        self.assertEqual(data["results"], [])
+        self.assertEqual(data["error"], "knowledge base search temporarily unavailable")
 
 
 class AgentGraphTests(TestCase):

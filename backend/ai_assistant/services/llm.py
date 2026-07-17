@@ -44,6 +44,7 @@ def get_chat_llm() -> ChatOpenAI:
         api_key=api_key,
         model=settings.LITELLM_CHAT_MODEL,
         streaming=True,
+        timeout=120,
     )
 
 
