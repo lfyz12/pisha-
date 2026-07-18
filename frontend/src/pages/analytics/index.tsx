@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Icon } from "@/components/ui/icon";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AdminOnly } from "@/components/admin-only";
 import { StudentSelect } from "@/components/student-select";
 import { useAuthStore } from "@/stores";
@@ -17,6 +18,74 @@ import {
 } from "./components";
 
 const courses = ["Все", "1", "2", "3", "4"];
+
+function RatingTableSkeleton() {
+  return (
+    <section className="bg-surface-card rounded-xl border border-border-subtle overflow-hidden">
+      <div className="p-4 sm:p-6 border-b border-border-subtle flex items-center justify-between gap-3">
+        <Skeleton className="h-4 w-36" />
+        <Skeleton className="h-8 w-48 rounded-lg hidden sm:block" />
+      </div>
+      <div className="hidden sm:block overflow-x-auto">
+        <table className="w-full text-left table-auto">
+          <thead className="bg-surface-container-low border-b border-border-subtle">
+            <tr>
+              <th className="px-4 py-3.5 w-12">
+                <Skeleton className="h-3 w-5 mx-auto" />
+              </th>
+              <th className="px-4 py-3.5">
+                <Skeleton className="h-3 w-10" />
+              </th>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <th key={i} className="px-4 py-3.5 w-20">
+                  <Skeleton className="h-3 w-12 mx-auto" />
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border-subtle">
+            {Array.from({ length: 8 }).map((_, row) => (
+              <tr key={row}>
+                <td className="px-4 py-3 text-center">
+                  <Skeleton className="h-4 w-5 mx-auto" />
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                    <Skeleton className="h-4 w-40" />
+                  </div>
+                </td>
+                {Array.from({ length: 5 }).map((_, col) => (
+                  <td key={col} className="px-4 py-3 text-center">
+                    <Skeleton className="h-4 w-10 mx-auto" />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="sm:hidden divide-y divide-border-subtle">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-7 h-7 rounded-full shrink-0" />
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {Array.from({ length: 3 }).map((_, j) => (
+                <Skeleton key={j} className="h-12 rounded-lg" />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 export default function AnalyticsPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -150,8 +219,12 @@ export default function AnalyticsPage() {
         <LineChartSection />
       </section>
 
-      {ratingStudents.length > 0 && (
-        <StudentRatingTable students={ratingStudents} activeCourse={activeCourse} />
+      {rating.isLoading ? (
+        <RatingTableSkeleton />
+      ) : (
+        ratingStudents.length > 0 && (
+          <StudentRatingTable students={ratingStudents} activeCourse={activeCourse} />
+        )
       )}
 
       <AdminOnly>
@@ -240,7 +313,7 @@ export default function AnalyticsPage() {
         </section>
       </AdminOnly>
 
-      {!isStudent && ratingStudents.length === 0 && (
+      {!isStudent && !rating.isLoading && ratingStudents.length === 0 && (
         <div className="text-center py-12 text-secondary text-sm flex flex-col items-center gap-2">
           <Icon name="info" className="text-xl" />
           <span>Загрузите Excel на странице рейтинга для просмотра аналитики</span>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Icon } from "@/components/ui/icon";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StudentProjectsPanel } from "@/components/student-projects-panel";
 import { useAuthStore } from "@/stores";
 import { useRatingData } from "@/hooks";
@@ -8,6 +9,7 @@ import { cn, formatNumber } from "@/lib/utils";
 export default function ProfilePage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const { rating, metrics } = useRatingData();
+  const isLoading = rating.isLoading || metrics.isLoading;
   const ratingStudents = rating.data?.data?.students ?? [];
   const ratingStats = rating.data?.data?.stats;
   const dashboardMetrics = metrics.data?.data;
@@ -22,14 +24,23 @@ export default function ProfilePage() {
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
 
   const isAdmin = currentUser?.role === "admin";
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    setProfileSaved(true);
-    setEditing(false);
-    setTimeout(() => setProfileSaved(false), 2000);
+    if (profileSaving) return;
+    setProfileSaving(true);
+    // Симуляция запроса: pending честный, «Сохранено» — только после завершения
+    setTimeout(() => {
+      setProfileSaving(false);
+      setProfileSaved(true);
+      setTimeout(() => {
+        setProfileSaved(false);
+        setEditing(false);
+      }, 1200);
+    }, 800);
   };
 
   const handleChangePassword = (e: React.FormEvent) => {
@@ -57,6 +68,66 @@ export default function ProfilePage() {
   };
 
   if (!currentUser) return null;
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8">
+        <section className="glass-card rounded-xl border p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+            <Skeleton className="w-20 h-20 sm:w-24 sm:h-24 rounded-full shrink-0 self-center sm:self-auto" />
+            <div className="flex-1 min-w-0 space-y-3 pt-0 sm:pt-2">
+              <Skeleton className="h-8 w-56 max-w-full mx-auto sm:mx-0" />
+              <Skeleton className="h-4 w-40 mx-auto sm:mx-0" />
+              <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-6 w-24 rounded" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="glass-card rounded-xl border p-4 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-44" />
+                <Skeleton className="h-8 w-32 rounded-lg" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full rounded-lg" />
+                ))}
+              </div>
+              <Skeleton className="h-24 w-full rounded-lg" />
+            </div>
+            <div className="glass-card rounded-xl border p-4 sm:p-6 space-y-4">
+              <Skeleton className="h-5 w-32" />
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full rounded-lg" />
+              ))}
+              <Skeleton className="h-12 w-44 rounded-lg" />
+            </div>
+          </div>
+          <div className="space-y-6">
+            <div className="glass-card rounded-xl border p-4 sm:p-6 space-y-3">
+              <Skeleton className="h-4 w-24" />
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-4 w-full" />
+              ))}
+              <Skeleton className="h-9 w-full rounded-lg" />
+            </div>
+            <div className="glass-card rounded-xl border p-4 sm:p-6 space-y-3">
+              <Skeleton className="h-4 w-24" />
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-4 w-full" />
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -200,9 +271,15 @@ export default function ProfilePage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-primary text-on-primary text-sm font-bold rounded-lg hover:opacity-90 active:scale-[0.99] transition-all flex items-center gap-2"
+                    disabled={profileSaving || profileSaved}
+                    className="px-5 py-2 bg-primary text-on-primary text-sm font-bold rounded-lg hover:opacity-90 active:scale-[0.99] transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {profileSaved ? (
+                    {profileSaving ? (
+                      <>
+                        <Icon name="hourglass_empty" className="text-sm" />
+                        Сохранение…
+                      </>
+                    ) : profileSaved ? (
                       <>
                         <Icon name="check" className="text-sm" />
                         Сохранено

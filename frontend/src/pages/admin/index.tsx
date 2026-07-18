@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useUploadExcel } from "@/hooks";
 import { KnowledgeBaseSection } from "@/pages/admin/knowledge-base";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,9 @@ export default function AdminPage() {
   const summary = uploadExcel.data?.data;
   const [policy, setPolicy] = useState<AccessPolicy | null>(null);
   const [policyError, setPolicyError] = useState("");
+  const [policySavingKey, setPolicySavingKey] = useState<keyof AccessPolicy | null>(null);
   const [credentialError, setCredentialError] = useState("");
+  const [credentialsDownloading, setCredentialsDownloading] = useState(false);
 
   useEffect(() => {
     getAccessPolicy()
@@ -28,22 +31,26 @@ export default function AdminPage() {
   }, []);
 
   const togglePolicy = async (key: keyof AccessPolicy) => {
-    if (!policy) return;
+    if (!policy || policySavingKey) return;
     const previous = policy;
     const next = { ...policy, [key]: !policy[key] };
     setPolicy(next);
+    setPolicySavingKey(key);
     try {
       const response = await updateAccessPolicy({ [key]: next[key] });
       setPolicy(response.data);
     } catch {
       setPolicy(previous);
       setPolicyError("Не удалось сохранить политику доступа");
+    } finally {
+      setPolicySavingKey(null);
     }
   };
 
   const downloadCredentials = async () => {
-    if (!summary?.credentialBundleId) return;
+    if (!summary?.credentialBundleId || credentialsDownloading) return;
     setCredentialError("");
+    setCredentialsDownloading(true);
     try {
       const response = await consumeCredentialBundle(summary.credentialBundleId);
       const csvCell = (value: string) => {
@@ -67,6 +74,8 @@ export default function AdminPage() {
       URL.revokeObjectURL(url);
     } catch {
       setCredentialError("Файл реквизитов уже получен или срок его действия истёк");
+    } finally {
+      setCredentialsDownloading(false);
     }
   };
 
@@ -127,26 +136,34 @@ export default function AdminPage() {
             </div>
             {policyError && <p className="text-xs text-status-error">{policyError}</p>}
             <div className="grid gap-3 md:grid-cols-2">
-              {policy &&
-                [
-                  ["show_names_in_rating", "Показывать ФИО в общем рейтинге"],
-                  ["allow_other_profiles", "Разрешать чужие профили"],
-                  ["allow_other_attendance", "Показывать чужую посещаемость"],
-                  ["allow_other_activities", "Показывать чужую активность"],
-                  ["allow_scoring_logs", "Разрешать журнал начислений"],
-                  ["allow_ai_rules", "Разрешать просмотр AI-правил"],
-                  ["allow_ai_chat", "ИИ-чат и проекты"],
-                  ["allow_global_notifications", "Показывать системные уведомления"],
-                ].map(([key, label]) => (
-                  <label key={key} className="flex items-center gap-3 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={policy[key as keyof AccessPolicy]}
-                      onChange={() => togglePolicy(key as keyof AccessPolicy)}
-                    />
-                    {label}
-                  </label>
-                ))}
+              {!policy && !policyError
+                ? Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Skeleton className="w-4 h-4 rounded shrink-0" />
+                      <Skeleton className="h-4 w-56 max-w-full" />
+                    </div>
+                  ))
+                : policy &&
+                  [
+                    ["show_names_in_rating", "Показывать ФИО в общем рейтинге"],
+                    ["allow_other_profiles", "Разрешать чужие профили"],
+                    ["allow_other_attendance", "Показывать чужую посещаемость"],
+                    ["allow_other_activities", "Показывать чужую активность"],
+                    ["allow_scoring_logs", "Разрешать журнал начислений"],
+                    ["allow_ai_rules", "Разрешать просмотр AI-правил"],
+                    ["allow_ai_chat", "ИИ-чат и проекты"],
+                    ["allow_global_notifications", "Показывать системные уведомления"],
+                  ].map(([key, label]) => (
+                    <label key={key} className="flex items-center gap-3 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={policy[key as keyof AccessPolicy]}
+                        disabled={policySavingKey === key}
+                        onChange={() => togglePolicy(key as keyof AccessPolicy)}
+                      />
+                      {label}
+                    </label>
+                  ))}
             </div>
           </section>
 
@@ -201,9 +218,13 @@ export default function AdminPage() {
                   {summary.credentialBundleId && (
                     <button
                       onClick={downloadCredentials}
-                      className="w-full border border-primary text-primary font-bold py-2.5 rounded-lg text-sm"
+                      disabled={credentialsDownloading}
+                      className="w-full border border-primary text-primary font-bold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Скачать временные реквизиты
+                      {credentialsDownloading && (
+                        <Icon name="hourglass_empty" className="text-lg" />
+                      )}
+                      {credentialsDownloading ? "Подготовка…" : "Скачать временные реквизиты"}
                     </button>
                   )}
                   {credentialError && (

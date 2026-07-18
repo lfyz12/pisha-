@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { IngestionStatusBadge } from "@/components/ingestion-status-badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   useCreateKBCategory,
   useDeleteKBCategory,
@@ -130,12 +131,12 @@ export function KnowledgeBaseSection() {
   };
 
   const handleDeleteDocument = () => {
-    if (!documentToDelete) return;
+    if (!documentToDelete || deleteDocument.isPending) return;
     deleteDocument.mutate(documentToDelete, {
       onSuccess: () => toast({ title: "Документ удалён" }),
       onError: () => toast({ title: "Не удалось удалить документ", variant: "destructive" }),
+      onSettled: () => setDocumentToDelete(null),
     });
-    setDocumentToDelete(null);
   };
 
   const openCategoryForm = (category?: GrantCategory) => {
@@ -189,12 +190,12 @@ export function KnowledgeBaseSection() {
   };
 
   const handleDeleteCategory = () => {
-    if (!categoryToDelete) return;
+    if (!categoryToDelete || deleteCategory.isPending) return;
     deleteCategory.mutate(categoryToDelete, {
       onSuccess: () => toast({ title: "Категория удалена" }),
       onError: () => toast({ title: "Не удалось удалить категорию", variant: "destructive" }),
+      onSettled: () => setCategoryToDelete(null),
     });
-    setCategoryToDelete(null);
   };
 
   const formatDate = (ts: string) =>
@@ -300,7 +301,51 @@ export function KnowledgeBaseSection() {
         <h3 className="text-sm font-headline font-bold">Документы</h3>
         {documentsQuery.isError ? (
           <p className="text-sm text-status-error">Не удалось загрузить документы</p>
-        ) : documents.length === 0 && !documentsQuery.isLoading ? (
+        ) : documentsQuery.isLoading ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Название</TableHead>
+                <TableHead>Источник</TableHead>
+                <TableHead>Статус</TableHead>
+                <TableHead>Категории</TableHead>
+                <TableHead className="text-right">Чанки</TableHead>
+                <TableHead>Добавлен</TableHead>
+                <TableHead className="text-right">Действия</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton className="h-4 w-44 max-w-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-14" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Skeleton className="h-4 w-8 ml-auto" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-1">
+                      <Skeleton className="w-7 h-7 rounded" />
+                      <Skeleton className="w-7 h-7 rounded" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : documents.length === 0 ? (
           <p className="text-sm text-secondary">Документов пока нет</p>
         ) : (
           <Table>
@@ -403,7 +448,23 @@ export function KnowledgeBaseSection() {
             Создать
           </button>
         </div>
-        {categories.length === 0 && !categoriesQuery.isLoading ? (
+        {categoriesQuery.isLoading ? (
+          <ul className="divide-y divide-border-subtle">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <li key={i} className="flex items-center gap-3 py-2.5">
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-36" />
+                    <Skeleton className="h-4 w-14 rounded" />
+                  </div>
+                  <Skeleton className="h-3 w-56 max-w-full" />
+                </div>
+                <Skeleton className="w-7 h-7 rounded shrink-0" />
+                <Skeleton className="w-7 h-7 rounded shrink-0" />
+              </li>
+            ))}
+          </ul>
+        ) : categories.length === 0 ? (
           <p className="text-sm text-secondary">Категорий пока нет</p>
         ) : (
           <ul className="divide-y divide-border-subtle">
@@ -516,9 +577,14 @@ export function KnowledgeBaseSection() {
                 <button
                   type="submit"
                   disabled={createCategory.isPending || updateCategory.isPending}
-                  className="px-5 py-2 bg-primary text-on-primary text-sm font-bold rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
+                  className="px-5 py-2 bg-primary text-on-primary text-sm font-bold rounded-lg hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-2"
                 >
-                  Сохранить
+                  {(createCategory.isPending || updateCategory.isPending) && (
+                    <Icon name="hourglass_empty" className="text-sm" />
+                  )}
+                  {createCategory.isPending || updateCategory.isPending
+                    ? "Сохранение…"
+                    : "Сохранить"}
                 </button>
               </DialogFooter>
             </form>
@@ -535,8 +601,16 @@ export function KnowledgeBaseSection() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteDocument}>Удалить</AlertDialogAction>
+            <AlertDialogCancel disabled={deleteDocument.isPending}>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteDocument.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteDocument();
+              }}
+            >
+              {deleteDocument.isPending ? "Удаление…" : "Удалить"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -550,8 +624,16 @@ export function KnowledgeBaseSection() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteCategory}>Удалить</AlertDialogAction>
+            <AlertDialogCancel disabled={deleteCategory.isPending}>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteCategory.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteCategory();
+              }}
+            >
+              {deleteCategory.isPending ? "Удаление…" : "Удалить"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

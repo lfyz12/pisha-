@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Icon } from "@/components/ui/icon";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StudentSelect } from "@/components/student-select";
 import { useAuthStore } from "@/stores";
 import { useRatingData, useStudentProfile } from "@/hooks";
@@ -13,6 +14,7 @@ export default function OverviewPage() {
   const isAdmin = currentUser?.role === "admin";
 
   const { rating, metrics } = useRatingData();
+  const isLoading = rating.isLoading || metrics.isLoading;
   const ratingStudents = rating.data?.data?.students ?? [];
   const ratingStats = rating.data?.data?.stats;
   const dashboardMetrics = metrics.data?.data;
@@ -76,140 +78,182 @@ export default function OverviewPage() {
 
       <section className="grid grid-cols-1 md:grid-cols-12 gap-6 animate-fade-up motion-delay-100">
         <div className="md:col-span-5 glass-card p-6 rounded-xl border-t-4 border-primary flex flex-col justify-between">
-          <div>
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xs font-label uppercase tracking-widest text-secondary">
-                {targetStudent ? `Рейтинг: ${studentName}` : "Мой рейтинг"}
-              </h3>
-              <span className="bg-primary-fixed text-primary px-2 py-0.5 rounded text-xs font-bold">
-                {scorePercent >= 90
-                  ? "Платиновый"
-                  : scorePercent >= 70
-                    ? "Золотой"
-                    : scorePercent >= 40
-                      ? "Серебряный"
-                      : "Базовый"}
-              </span>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-headline font-bold text-primary">
-                {targetStudent ? rank : isAdmin ? "—" : rank}
-              </span>
-              <span className="text-sm text-secondary">из {totalStudents}</span>
-            </div>
-            {targetStudent ? (
-              <p className="text-sm text-secondary mt-1">
-                {studentGroup} • {targetStudent.course} курс
-              </p>
-            ) : isAdmin ? (
-              <p className="text-sm text-secondary mt-1">Агрегированные данные по всем студентам</p>
-            ) : (
-              <p className="text-sm text-secondary mt-1">
-                Вы входите в топ-{rankPercent}% студентов школы
-              </p>
-            )}
-          </div>
-          <div className="mt-6">
-            <div className="flex justify-between text-xs font-bold mb-1">
-              <span>
-                {targetStudent
-                  ? `${formatNumber(myScore)} балла`
-                  : `${formatNumber(myScore)} балла`}
-              </span>
-              {!isAdmin && (
-                <span className="text-secondary">
-                  До лидера: {formatNumber(maxScore - myScore)}
-                </span>
-              )}
-            </div>
-            <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
-              <div
-                className="bg-primary h-full rounded-full transition-all duration-1000"
-                style={{ width: `${scorePercent}%` }}
-              />
-            </div>
-          </div>
+          {isLoading ? (
+            <>
+              <div>
+                <div className="flex justify-between items-start mb-4">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-5 w-20 rounded" />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <Skeleton className="h-10 w-14" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+                <Skeleton className="h-4 w-48 mt-2" />
+              </div>
+              <div className="mt-6">
+                <div className="flex justify-between mb-2">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <Skeleton className="h-2 w-full rounded-full" />
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xs font-label uppercase tracking-widest text-secondary">
+                    {targetStudent ? `Рейтинг: ${studentName}` : "Мой рейтинг"}
+                  </h3>
+                  <span className="bg-primary-fixed text-primary px-2 py-0.5 rounded text-xs font-bold">
+                    {scorePercent >= 90
+                      ? "Платиновый"
+                      : scorePercent >= 70
+                        ? "Золотой"
+                        : scorePercent >= 40
+                          ? "Серебряный"
+                          : "Базовый"}
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-headline font-bold text-primary">
+                    {targetStudent ? rank : isAdmin ? "—" : rank}
+                  </span>
+                  <span className="text-sm text-secondary">из {totalStudents}</span>
+                </div>
+                {targetStudent ? (
+                  <p className="text-sm text-secondary mt-1">
+                    {studentGroup} • {targetStudent.course} курс
+                  </p>
+                ) : isAdmin ? (
+                  <p className="text-sm text-secondary mt-1">
+                    Агрегированные данные по всем студентам
+                  </p>
+                ) : (
+                  <p className="text-sm text-secondary mt-1">
+                    Вы входите в топ-{rankPercent}% студентов школы
+                  </p>
+                )}
+              </div>
+              <div className="mt-6">
+                <div className="flex justify-between text-xs font-bold mb-1">
+                  <span>
+                    {targetStudent
+                      ? `${formatNumber(myScore)} балла`
+                      : `${formatNumber(myScore)} балла`}
+                  </span>
+                  {!isAdmin && (
+                    <span className="text-secondary">
+                      До лидера: {formatNumber(maxScore - myScore)}
+                    </span>
+                  )}
+                </div>
+                <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+                  <div
+                    className="bg-primary h-full rounded-full transition-all duration-1000"
+                    style={{ width: `${scorePercent}%` }}
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="md:col-span-7 grid grid-cols-2 gap-4">
-          <div className="glass-card p-5 rounded-xl border-t-2">
-            <div className="flex justify-between mb-2">
-              <Icon name="grade" className="text-primary text-xl" />
-              <span className="text-xs font-label text-secondary">
-                {targetStudent ? "Средний балл" : isAdmin ? "Средний балл" : "Средний балл"}
-              </span>
-            </div>
-            <div className="text-xl font-headline font-bold">
-              {targetStudent
-                ? formatNumber(targetStudent.academicScore)
-                : isAdmin
-                  ? formatNumber(dashboardMetrics?.averageGpa)
-                  : formatNumber(currentStudent?.academicScore)}
-            </div>
-            {!isAdmin && !targetStudent && (
-              <div className="text-status-success text-xs font-semibold flex items-center mt-1">
-                <Icon name="arrow_upward" className="text-sm" /> +0.12
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="glass-card p-5 rounded-xl border-t-2">
+                <div className="flex justify-between mb-2">
+                  <Skeleton className="w-5 h-5 rounded" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+                <Skeleton className="h-6 w-16" />
+                <Skeleton className="h-3 w-24 mt-2" />
               </div>
-            )}
-          </div>
-          <div className="glass-card p-5 rounded-xl border-t-2">
-            <div className="flex justify-between mb-2">
-              <Icon name="event_available" className="text-primary text-xl" />
-              <span className="text-xs font-label text-secondary">Посещаемость</span>
-            </div>
-            <div className="text-xl font-headline font-bold">
-              {targetStudent
-                ? (attendPct ?? "—") + "%"
-                : isAdmin
-                  ? (dashboardMetrics?.attendance ?? "—") + "%"
-                  : (attendPct ?? "—") + "%"}
-            </div>
-            <div className="text-status-success text-xs font-semibold flex items-center mt-1">
-              <Icon name="trending_up" className="text-sm" /> Стабильно
-            </div>
-          </div>
-          <div className="glass-card p-5 rounded-xl border-t-2">
-            <div className="flex justify-between mb-2">
-              <Icon name="architecture" className="text-primary text-xl" />
-              <span className="text-xs font-label text-secondary">Проекты</span>
-            </div>
-            <div className="text-xl font-headline font-bold">
-              {targetStudent
-                ? (projectCount ?? "—")
-                : isAdmin
-                  ? (dashboardMetrics?.projects ?? "—")
-                  : (projectCount ?? "—")}
-            </div>
-            <div className="text-secondary text-xs font-semibold mt-1">
-              {targetStudent
-                ? "Текущих проектов"
-                : isAdmin
-                  ? "Завершены в срок"
-                  : "Текущих проектов"}
-            </div>
-          </div>
-          <div className="glass-card p-5 rounded-xl border-t-2">
-            <div className="flex justify-between mb-2">
-              <Icon name="bolt" className="text-primary text-xl" />
-              <span className="text-xs font-label text-secondary">Активность</span>
-            </div>
-            <div className="text-xl font-headline font-bold">
-              {targetStudent
-                ? formatNumber(targetStudent.activityScore)
-                : formatNumber(currentStudent?.activityScore)}
-            </div>
-            <div className="text-primary text-xs font-semibold mt-1">
-              {targetStudent
-                ? targetStudent.trend === "up"
-                  ? "Высокая активность"
-                  : "Средняя активность"
-                : ratingStats?.activityLevel === "Высокая"
-                  ? "Высокая активность"
-                  : ratingStats?.activityLevel === "Низкая"
-                    ? "Низкая активность"
-                    : "Средняя активность"}
-            </div>
-          </div>
+            ))
+          ) : (
+            <>
+              <div className="glass-card p-5 rounded-xl border-t-2">
+                <div className="flex justify-between mb-2">
+                  <Icon name="grade" className="text-primary text-xl" />
+                  <span className="text-xs font-label text-secondary">
+                    {targetStudent ? "Средний балл" : isAdmin ? "Средний балл" : "Средний балл"}
+                  </span>
+                </div>
+                <div className="text-xl font-headline font-bold">
+                  {targetStudent
+                    ? formatNumber(targetStudent.academicScore)
+                    : isAdmin
+                      ? formatNumber(dashboardMetrics?.averageGpa)
+                      : formatNumber(currentStudent?.academicScore)}
+                </div>
+                {!isAdmin && !targetStudent && (
+                  <div className="text-status-success text-xs font-semibold flex items-center mt-1">
+                    <Icon name="arrow_upward" className="text-sm" /> +0.12
+                  </div>
+                )}
+              </div>
+              <div className="glass-card p-5 rounded-xl border-t-2">
+                <div className="flex justify-between mb-2">
+                  <Icon name="event_available" className="text-primary text-xl" />
+                  <span className="text-xs font-label text-secondary">Посещаемость</span>
+                </div>
+                <div className="text-xl font-headline font-bold">
+                  {targetStudent
+                    ? (attendPct ?? "—") + "%"
+                    : isAdmin
+                      ? (dashboardMetrics?.attendance ?? "—") + "%"
+                      : (attendPct ?? "—") + "%"}
+                </div>
+                <div className="text-status-success text-xs font-semibold flex items-center mt-1">
+                  <Icon name="trending_up" className="text-sm" /> Стабильно
+                </div>
+              </div>
+              <div className="glass-card p-5 rounded-xl border-t-2">
+                <div className="flex justify-between mb-2">
+                  <Icon name="architecture" className="text-primary text-xl" />
+                  <span className="text-xs font-label text-secondary">Проекты</span>
+                </div>
+                <div className="text-xl font-headline font-bold">
+                  {targetStudent
+                    ? (projectCount ?? "—")
+                    : isAdmin
+                      ? (dashboardMetrics?.projects ?? "—")
+                      : (projectCount ?? "—")}
+                </div>
+                <div className="text-secondary text-xs font-semibold mt-1">
+                  {targetStudent
+                    ? "Текущих проектов"
+                    : isAdmin
+                      ? "Завершены в срок"
+                      : "Текущих проектов"}
+                </div>
+              </div>
+              <div className="glass-card p-5 rounded-xl border-t-2">
+                <div className="flex justify-between mb-2">
+                  <Icon name="bolt" className="text-primary text-xl" />
+                  <span className="text-xs font-label text-secondary">Активность</span>
+                </div>
+                <div className="text-xl font-headline font-bold">
+                  {targetStudent
+                    ? formatNumber(targetStudent.activityScore)
+                    : formatNumber(currentStudent?.activityScore)}
+                </div>
+                <div className="text-primary text-xs font-semibold mt-1">
+                  {targetStudent
+                    ? targetStudent.trend === "up"
+                      ? "Высокая активность"
+                      : "Средняя активность"
+                    : ratingStats?.activityLevel === "Высокая"
+                      ? "Высокая активность"
+                      : ratingStats?.activityLevel === "Низкая"
+                        ? "Низкая активность"
+                        : "Средняя активность"}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
@@ -243,7 +287,30 @@ export default function OverviewPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle text-sm">
-                {ratingStudents.length > 0 ? (
+                {isLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <tr key={i}>
+                      <td className="px-5 py-3">
+                        <Skeleton className="h-4 w-6" />
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="w-7 h-7 rounded-full shrink-0" />
+                          <Skeleton className="h-4 w-32" />
+                        </div>
+                      </td>
+                      <td className="px-5 py-3">
+                        <Skeleton className="h-4 w-16" />
+                      </td>
+                      <td className="px-5 py-3">
+                        <Skeleton className="h-4 w-12" />
+                      </td>
+                      <td className="px-5 py-3">
+                        <Skeleton className="h-4 w-5 ml-auto" />
+                      </td>
+                    </tr>
+                  ))
+                ) : ratingStudents.length > 0 ? (
                   <>
                     {ratingStudents.slice(0, 3).map((s) => (
                       <tr
@@ -340,7 +407,20 @@ export default function OverviewPage() {
             </table>
           </div>
           <div className="sm:hidden divide-y divide-border-subtle">
-            {ratingStudents.length > 0 ? (
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                    <Skeleton className="h-4 w-12 shrink-0" />
+                  </div>
+                </div>
+              ))
+            ) : ratingStudents.length > 0 ? (
               <>
                 {ratingStudents.slice(0, 3).map((s) => (
                   <div
@@ -429,70 +509,84 @@ export default function OverviewPage() {
           <h3 className="text-xs font-bold uppercase tracking-widest text-secondary self-start mb-4">
             Аналитический радар
           </h3>
-          <div className="w-full aspect-square relative flex items-center justify-center">
-            <svg className="w-full h-full" viewBox="0 0 100 100">
-              <circle
-                cx="50"
-                cy="50"
-                fill="none"
-                r="45"
-                stroke="var(--color-border-subtle)"
-                strokeDasharray="2 2"
-                strokeWidth="0.5"
-              />
-              <circle
-                cx="50"
-                cy="50"
-                fill="none"
-                r="30"
-                stroke="var(--color-border-subtle)"
-                strokeDasharray="2 2"
-                strokeWidth="0.5"
-              />
-              <circle
-                cx="50"
-                cy="50"
-                fill="none"
-                r="15"
-                stroke="var(--color-border-subtle)"
-                strokeDasharray="2 2"
-                strokeWidth="0.5"
-              />
-              <path
-                d="M 50 5 L 50 95 M 5 50 L 95 50 M 18.5 18.5 L 81.5 81.5 M 81.5 18.5 L 18.5 81.5"
-                stroke="var(--color-border-subtle)"
-                strokeWidth="0.5"
-              />
-              <polygon
-                fill="rgba(163, 56, 0, 0.15)"
-                points="50,15 80,40 70,75 50,85 20,60 15,35"
-                stroke="var(--color-primary)"
-                strokeWidth="1.5"
-              />
-            </svg>
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 text-[10px] font-bold">
-              HARD SKILLS
-            </div>
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-[10px] font-bold">
-              АКТИВНОСТЬ
-            </div>
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] font-bold">
-              ПРОЕКТЫ
-            </div>
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 rotate-90 text-[10px] font-bold">
-              БАЛЛЫ
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-2 w-full">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-primary rounded-full" />
-              <span className="text-xs text-secondary">{targetStudent?.name ?? "Вы"}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-surface-container-highest rounded-full" />
-              <span className="text-xs text-secondary">Среднее по школе</span>
-            </div>
-          </div>
+          {isLoading ? (
+            <>
+              <div className="w-full aspect-square flex items-center justify-center">
+                <Skeleton className="w-4/5 aspect-square rounded-full" />
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2 w-full">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="w-full aspect-square relative flex items-center justify-center">
+                <svg className="w-full h-full" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    fill="none"
+                    r="45"
+                    stroke="var(--color-border-subtle)"
+                    strokeDasharray="2 2"
+                    strokeWidth="0.5"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    fill="none"
+                    r="30"
+                    stroke="var(--color-border-subtle)"
+                    strokeDasharray="2 2"
+                    strokeWidth="0.5"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    fill="none"
+                    r="15"
+                    stroke="var(--color-border-subtle)"
+                    strokeDasharray="2 2"
+                    strokeWidth="0.5"
+                  />
+                  <path
+                    d="M 50 5 L 50 95 M 5 50 L 95 50 M 18.5 18.5 L 81.5 81.5 M 81.5 18.5 L 18.5 81.5"
+                    stroke="var(--color-border-subtle)"
+                    strokeWidth="0.5"
+                  />
+                  <polygon
+                    fill="rgba(163, 56, 0, 0.15)"
+                    points="50,15 80,40 70,75 50,85 20,60 15,35"
+                    stroke="var(--color-primary)"
+                    strokeWidth="1.5"
+                  />
+                </svg>
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 text-[10px] font-bold">
+                  HARD SKILLS
+                </div>
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-[10px] font-bold">
+                  АКТИВНОСТЬ
+                </div>
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] font-bold">
+                  ПРОЕКТЫ
+                </div>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 rotate-90 text-[10px] font-bold">
+                  БАЛЛЫ
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2 w-full">
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-primary rounded-full" />
+                  <span className="text-xs text-secondary">{targetStudent?.name ?? "Вы"}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-surface-container-highest rounded-full" />
+                  <span className="text-xs text-secondary">Среднее по школе</span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
@@ -504,104 +598,150 @@ export default function OverviewPage() {
               Стипендии и гранты
             </h3>
             <div className="space-y-3">
-              <div className="glass-card p-4 rounded-lg border-l-4 border-status-success flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 bg-surface-container rounded flex items-center justify-center">
-                    <Icon name="token" className="text-primary" />
+              {isLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="glass-card p-4 rounded-lg border-l-4 border-border-subtle flex justify-between items-center"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="w-11 h-11 rounded" />
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-4 w-36" />
+                        <Skeleton className="h-3 w-28" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-8 w-24 rounded-lg" />
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold">Стипендия Яндекса</h4>
-                    <p className="text-xs text-secondary">
-                      Шанс получения: <span className="text-status-success font-bold">95%</span>
-                    </p>
+                ))
+              ) : (
+                <>
+                  <div className="glass-card p-4 rounded-lg border-l-4 border-status-success flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 bg-surface-container rounded flex items-center justify-center">
+                        <Icon name="token" className="text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold">Стипендия Яндекса</h4>
+                        <p className="text-xs text-secondary">
+                          Шанс получения: <span className="text-status-success font-bold">95%</span>
+                        </p>
+                      </div>
+                    </div>
+                    <button className="bg-primary text-on-primary px-3 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity">
+                      Подать заявку
+                    </button>
                   </div>
-                </div>
-                <button className="bg-primary text-on-primary px-3 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity">
-                  Подать заявку
-                </button>
-              </div>
-              <div className="glass-card p-4 rounded-lg border-l-4 border-primary flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 bg-surface-container rounded flex items-center justify-center">
-                    <Icon name="factory" className="text-primary" />
+                  <div className="glass-card p-4 rounded-lg border-l-4 border-primary flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 bg-surface-container rounded flex items-center justify-center">
+                        <Icon name="factory" className="text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold">Именная стипендия ПНТЗ</h4>
+                        <p className="text-xs text-secondary">
+                          Шанс получения: <span className="text-primary font-bold">72%</span>
+                        </p>
+                      </div>
+                    </div>
+                    <button className="bg-surface-container text-text-main px-3 py-1.5 rounded-lg text-xs font-bold border border-border-subtle">
+                      Подробнее
+                    </button>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold">Именная стипендия ПНТЗ</h4>
-                    <p className="text-xs text-secondary">
-                      Шанс получения: <span className="text-primary font-bold">72%</span>
-                    </p>
+                  <div className="glass-card p-4 rounded-lg border-l-4 border-secondary flex justify-between items-center opacity-60">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 bg-surface-container rounded flex items-center justify-center">
+                        <Icon name="school" className="text-secondary" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold">Президентский грант</h4>
+                        <p className="text-xs text-secondary">Необходим рейтинг &gt; 4.9</p>
+                      </div>
+                    </div>
+                    <Icon name="lock" className="text-secondary" />
                   </div>
-                </div>
-                <button className="bg-surface-container text-text-main px-3 py-1.5 rounded-lg text-xs font-bold border border-border-subtle">
-                  Подробнее
-                </button>
-              </div>
-              <div className="glass-card p-4 rounded-lg border-l-4 border-secondary flex justify-between items-center opacity-60">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 bg-surface-container rounded flex items-center justify-center">
-                    <Icon name="school" className="text-secondary" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold">Президентский грант</h4>
-                    <p className="text-xs text-secondary">Необходим рейтинг &gt; 4.9</p>
-                  </div>
-                </div>
-                <Icon name="lock" className="text-secondary" />
-              </div>
+                </>
+              )}
             </div>
           </div>
 
           <div className="glass-card rounded-xl border flex flex-col h-[400px]">
-            <div className="p-4 border-b border-border-subtle flex items-center gap-3 bg-surface-container-low/60">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <Icon name="smart_toy" fill className="text-on-primary text-lg" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold">ИИ-Помощник УПИШ</h4>
-                <p className="text-[10px] text-status-success font-bold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-status-success rounded-full" /> ONLINE
-                </p>
-              </div>
-            </div>
-            <div className="flex-1 p-4 overflow-y-auto space-y-4">
-              <div className="flex flex-col gap-1">
-                <div className="bg-surface-container-low p-2.5 rounded-lg rounded-tl-none max-w-[85%] text-sm">
-                  Привет, {currentUser?.name ?? "Александр"}! Я проанализировал твой профиль. У тебя
-                  отличные шансы на стипендию Яндекса в этом месяце. Хочешь подготовить документы?
+            {isLoading ? (
+              <>
+                <div className="p-4 border-b border-border-subtle flex items-center gap-3 bg-surface-container-low/60">
+                  <Skeleton className="w-8 h-8 rounded-full" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-3 w-32" />
+                    <Skeleton className="h-2.5 w-16" />
+                  </div>
                 </div>
-                <span className="text-[10px] text-secondary ml-1">14:02</span>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <div className="bg-primary text-on-primary p-2.5 rounded-lg rounded-tr-none max-w-[85%] text-sm">
-                  Да, давай подготовим. Какие данные нужны?
+                <div className="flex-1 p-4 space-y-4">
+                  <Skeleton className="h-14 w-[85%] rounded-lg rounded-tl-none" />
+                  <Skeleton className="h-10 w-[70%] rounded-lg rounded-tr-none ml-auto" />
                 </div>
-                <span className="text-[10px] text-secondary mr-1">14:05</span>
-              </div>
-            </div>
-            <div className="p-4 border-t border-border-subtle space-y-3">
-              <div className="flex flex-wrap gap-2">
-                <button className="px-2.5 py-1 border border-primary text-primary rounded-full text-xs hover:bg-primary-fixed transition-colors">
-                  Как повысить рейтинг?
-                </button>
-                <button className="px-2.5 py-1 border border-primary text-primary rounded-full text-xs hover:bg-primary-fixed transition-colors">
-                  Статус заявок
-                </button>
-              </div>
-              <div className="relative">
-                <input
-                  className="w-full bg-surface-card border border-border-subtle rounded-lg py-2.5 pl-3 pr-16 text-sm focus:outline-none focus:border-primary transition-colors"
-                  placeholder="Задайте вопрос..."
-                />
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
-                  <button className="text-secondary hover:text-primary transition-colors">
-                    <Icon name="attach_file" className="text-lg" />
-                  </button>
-                  <button className="text-primary hover:opacity-80 transition-opacity">
-                    <Icon name="send" className="text-lg" />
-                  </button>
+                <div className="p-4 border-t border-border-subtle space-y-3">
+                  <div className="flex gap-2">
+                    <Skeleton className="h-6 w-32 rounded-full" />
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                  </div>
+                  <Skeleton className="h-10 w-full rounded-lg" />
                 </div>
-              </div>
-            </div>
+              </>
+            ) : (
+              <>
+                <div className="p-4 border-b border-border-subtle flex items-center gap-3 bg-surface-container-low/60">
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                    <Icon name="smart_toy" fill className="text-on-primary text-lg" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold">ИИ-Помощник УПИШ</h4>
+                    <p className="text-[10px] text-status-success font-bold flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-status-success rounded-full" /> ONLINE
+                    </p>
+                  </div>
+                </div>
+                <div className="flex-1 p-4 overflow-y-auto space-y-4">
+                  <div className="flex flex-col gap-1">
+                    <div className="bg-surface-container-low p-2.5 rounded-lg rounded-tl-none max-w-[85%] text-sm">
+                      Привет, {currentUser?.name ?? "Александр"}! Я проанализировал твой профиль. У
+                      тебя отличные шансы на стипендию Яндекса в этом месяце. Хочешь подготовить
+                      документы?
+                    </div>
+                    <span className="text-[10px] text-secondary ml-1">14:02</span>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="bg-primary text-on-primary p-2.5 rounded-lg rounded-tr-none max-w-[85%] text-sm">
+                      Да, давай подготовим. Какие данные нужны?
+                    </div>
+                    <span className="text-[10px] text-secondary mr-1">14:05</span>
+                  </div>
+                </div>
+                <div className="p-4 border-t border-border-subtle space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <button className="px-2.5 py-1 border border-primary text-primary rounded-full text-xs hover:bg-primary-fixed transition-colors">
+                      Как повысить рейтинг?
+                    </button>
+                    <button className="px-2.5 py-1 border border-primary text-primary rounded-full text-xs hover:bg-primary-fixed transition-colors">
+                      Статус заявок
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      className="w-full bg-surface-card border border-border-subtle rounded-lg py-2.5 pl-3 pr-16 text-sm focus:outline-none focus:border-primary transition-colors"
+                      placeholder="Задайте вопрос..."
+                    />
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                      <button className="text-secondary hover:text-primary transition-colors">
+                        <Icon name="attach_file" className="text-lg" />
+                      </button>
+                      <button className="text-primary hover:opacity-80 transition-opacity">
+                        <Icon name="send" className="text-lg" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </section>
       )}

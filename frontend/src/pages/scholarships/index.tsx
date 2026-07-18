@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StudentSelect } from "@/components/student-select";
 import { useScholarshipStore, useAuthStore } from "@/stores";
 import { useRatingTable } from "@/hooks";
@@ -90,12 +91,29 @@ export default function ScholarshipsPage() {
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="bg-surface-card rounded-xl border border-border-subtle p-5 space-y-4 animate-pulse"
+              className="bg-surface-card rounded-xl border border-border-subtle p-5 flex flex-col"
             >
-              <div className="h-5 w-32 bg-surface-container-high rounded" />
-              <div className="h-4 w-24 bg-surface-container-high rounded" />
-              <div className="h-12 w-full bg-surface-container-high rounded" />
-              <div className="h-2 w-full bg-surface-container-high rounded" />
+              <div className="flex items-start justify-between mb-3">
+                <Skeleton className="w-10 h-10 rounded-lg shrink-0" />
+                <Skeleton className="h-5 w-24 rounded-full" />
+              </div>
+              <Skeleton className="h-5 w-3/4 mb-2" />
+              <Skeleton className="h-7 w-28 mb-3" />
+              <div className="space-y-1.5 mb-4 flex-1">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-5/6" />
+              </div>
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-3 w-8" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-3 w-8" />
+                </div>
+              </div>
+              <Skeleton className="h-10 w-full rounded-lg" />
             </div>
           ))}
         </div>
