@@ -1,0 +1,35 @@
+# Optional ngrok tunnel that exposes the dashboard publicly.
+#
+# Setup (one time):
+#   1. Get an authtoken: https://dashboard.ngrok.com/get-started/your-authtoken
+#   2. Add to .env:
+#        NGROK_AUTHTOKEN=your-token
+#        NGROK_BASIC_AUTH=user:password   # login:password required to open the link
+#   3. After the first start, learn the public URL (see below) and append it
+#      to ALLOWED_HOSTS in .env, e.g.:
+#        ALLOWED_HOSTS=localhost,127.0.0.1,abcd-12-34-56.ngrok-free.app
+#      then recreate the backend: docker compose -f docker-compose.yml up -d backend
+#
+# Start the stack with the tunnel:
+#   docker compose -f docker-compose.yml -f docker-compose.ngrok.yml up -d
+#
+# Public URL and request inspector:
+#   http://localhost:4040  (ngrok web UI)
+#   or: docker logs pisha-ngrok
+#
+# With a reserved (static) domain on a paid ngrok plan, replace the command:
+#   command: http --domain=your-reserved-domain.ngrok-free.app frontend:80
+services:
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: pisha-ngrok
+    restart: unless-stopped
+    command: http --basic-auth=${NGROK_BASIC_AUTH:?NGROK_BASIC_AUTH must be set in .env as user:password} frontend:80
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:?NGROK_AUTHTOKEN must be set in .env}
+    ports:
+      - "4040:4040"
+    depends_on:
+      - frontend
+    networks:
+      - pisha-network

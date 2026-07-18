@@ -54,3 +54,9 @@ coverage/
 .env
 .worktrees/
 .superpowers/
+
+# Secrets & local data (never push)
+student-credentials.csv
+*.xlsx
+*:Zone.Identifier
+.playwright-mcp/
