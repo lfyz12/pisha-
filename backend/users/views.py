@@ -16,7 +16,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from security.models import audit_event
 
-from .mfa import create_or_replace_device, create_recovery_codes, use_recovery_code, verify_totp
+from .mfa import create_or_replace_device, create_recovery_codes, device_secret, use_recovery_code, verify_totp
 from .models import LoginAttempt
 from .serializers import ForgotPasswordSerializer
 
@@ -192,7 +192,13 @@ def change_password_view(request):
 def mfa_setup_view(request):
     if request.user.role != User.Role.ADMIN:
         return Response({"message": "MFA is only required for administrators", "status": 403}, status=status.HTTP_403_FORBIDDEN)
-    _, secret = create_or_replace_device(request.user)
+    device = getattr(request.user, "mfa_device", None)
+    if device and not device.confirmed_at:
+        # Reuse the pending device's secret so repeated setup screens
+        # (re-login, remount) don't rotate it out from under the user.
+        secret = device_secret(device)
+    else:
+        _, secret = create_or_replace_device(request.user)
     uri = pyotp.TOTP(secret).provisioning_uri(name=request.user.username, issuer_name="Pisha")
     audit_event(request, "auth.mfa.setup_started")
     return Response({"data": {"otpauthUri": uri}, "status": 200})
@@ -202,7 +208,7 @@ def mfa_setup_view(request):
 @permission_classes([IsAuthenticated])
 def mfa_confirm_view(request):
     device = getattr(request.user, "mfa_device", None)
-    code = str(request.data.get("code", ""))
+    code = str(request.data.get("code", "")).replace(" ", "")
     if not device or not verify_totp(device, code):
         return Response({"message": "Invalid authentication code", "status": 400}, status=status.HTTP_400_BAD_REQUEST)
     device.confirmed_at = timezone.now()

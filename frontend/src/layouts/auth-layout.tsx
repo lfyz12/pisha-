@@ -3,8 +3,9 @@ import { useAuthStore } from "@/stores";
 
 export default function AuthLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const nextStep = useAuthStore((s) => s.nextStep);
 
-  if (isAuthenticated) {
+  if (isAuthenticated && !nextStep) {
     return <Navigate to="/dashboard" replace />;
   }
 

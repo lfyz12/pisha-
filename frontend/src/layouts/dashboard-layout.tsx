@@ -10,6 +10,7 @@ import { useAuthStore } from "@/stores";
 export default function DashboardLayout() {
   const location = useLocation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const nextStep = useAuthStore((s) => s.nextStep);
   const currentUser = useAuthStore((s) => s.currentUser);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -29,7 +30,20 @@ export default function DashboardLayout() {
     };
   }, [mobileSidebarOpen]);
 
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const closeOnDesktop = () => setMobileSidebarOpen(false);
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, []);
+
   if (!isAuthenticated) {
+    return <Navigate to="/auth/login" replace />;
+  }
+
+  // Security steps (password change / MFA setup) must be completed
+  // on the auth screens before entering the dashboard.
+  if (nextStep) {
     return <Navigate to="/auth/login" replace />;
   }
 
