@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from "react-router";
 import RootLayout from "@/layouts/root-layout";
 import AuthLayout from "@/layouts/auth-layout";
 import DashboardLayout from "@/layouts/dashboard-layout";
+import RouteErrorPage from "@/pages/errors/route-error";
 import { PageSkeleton } from "@/components/page-skeleton";
 import {
   LoginPage,
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
+    errorElement: <RouteErrorPage />,
     children: [
       {
         index: true,

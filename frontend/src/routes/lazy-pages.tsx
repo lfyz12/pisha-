@@ -1,13 +1,26 @@
 import { lazy } from "react";
+import {
+  importLoginPage,
+  importForgotPasswordPage,
+  importOverviewPage,
+  importAnalyticsPage,
+  importProfilePage,
+  importAdminPage,
+  importRatingPage,
+  importScholarshipsPage,
+  importChatPage,
+  importNotFoundPage,
+  importForbiddenPage,
+} from "./page-imports";
 
-export const LoginPage = lazy(() => import("@/pages/auth/login"));
-export const ForgotPasswordPage = lazy(() => import("@/pages/auth/forgot-password"));
-export const OverviewPage = lazy(() => import("@/pages/overview"));
-export const AnalyticsPage = lazy(() => import("@/pages/analytics"));
-export const ProfilePage = lazy(() => import("@/pages/profile"));
-export const AdminPage = lazy(() => import("@/pages/admin"));
-export const RatingPage = lazy(() => import("@/pages/rating"));
-export const ScholarshipsPage = lazy(() => import("@/pages/scholarships"));
-export const ChatPage = lazy(() => import("@/pages/chat"));
-export const NotFoundPage = lazy(() => import("@/pages/errors/not-found"));
-export const ForbiddenPage = lazy(() => import("@/pages/errors/forbidden"));
+export const LoginPage = lazy(importLoginPage);
+export const ForgotPasswordPage = lazy(importForgotPasswordPage);
+export const OverviewPage = lazy(importOverviewPage);
+export const AnalyticsPage = lazy(importAnalyticsPage);
+export const ProfilePage = lazy(importProfilePage);
+export const AdminPage = lazy(importAdminPage);
+export const RatingPage = lazy(importRatingPage);
+export const ScholarshipsPage = lazy(importScholarshipsPage);
+export const ChatPage = lazy(importChatPage);
+export const NotFoundPage = lazy(importNotFoundPage);
+export const ForbiddenPage = lazy(importForbiddenPage);

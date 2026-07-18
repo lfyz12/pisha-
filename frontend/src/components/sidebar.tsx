@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router";
 import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 import { useThemeStore, useAuthStore } from "@/stores";
+import { prefetchRoute } from "@/routes/page-imports";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -69,6 +70,8 @@ export function Sidebar({ isOpen, onClose, isMobile }: SidebarProps) {
             <button
               key={item.label}
               onClick={() => handleNav(item.path)}
+              onMouseEnter={() => prefetchRoute(item.path)}
+              onFocus={() => prefetchRoute(item.path)}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 text-left",
                 active
@@ -101,6 +104,8 @@ export function Sidebar({ isOpen, onClose, isMobile }: SidebarProps) {
         </button>
         <button
           onClick={() => handleNav("/dashboard/profile")}
+          onMouseEnter={() => prefetchRoute("/dashboard/profile")}
+          onFocus={() => prefetchRoute("/dashboard/profile")}
           className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-secondary hover:text-text-main hover:bg-surface-container-low rounded-lg transition-all text-left"
         >
           <Icon name="account_circle" className="text-[20px]" />

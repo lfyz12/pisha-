@@ -70,7 +70,7 @@ const ToastClose = React.forwardRef<HTMLButtonElement, React.ComponentProps<"but
       toast-close=""
       {...props}
     >
-      <Icon name="close" className="text-base" />
+      <Icon name="close" className="text-base leading-none" />
     </button>
   )
 );

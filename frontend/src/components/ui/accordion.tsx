@@ -21,7 +21,7 @@ const AccordionTrigger = React.forwardRef<
     <AccordionPrimitive.Trigger
       ref={ref}
       className={cn(
-        "flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline [&[data-state=open]>.material-symbols-outlined]:rotate-180",
+        "flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline [&[data-state=open]>.accordion-chevron]:rotate-180",
         className
       )}
       {...props}
@@ -29,7 +29,7 @@ const AccordionTrigger = React.forwardRef<
       {children}
       <Icon
         name="expand_more"
-        className="shrink-0 text-base text-muted-foreground transition-transform duration-200"
+        className="accordion-chevron shrink-0 text-base text-muted-foreground transition-transform duration-200"
       />
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
