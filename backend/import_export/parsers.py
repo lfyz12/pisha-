@@ -1,9 +1,74 @@
 import io
 import re
+import zipfile
 from dataclasses import dataclass, field
 from typing import Any
 
 import openpyxl
+
+def _minimal_styles_xml(xf_count: int) -> bytes:
+    xfs = b'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' * xf_count
+    return (
+        b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        b'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        b'<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>'
+        b'<fills count="1"><fill><patternFill patternType="none"/></fill></fills>'
+        b'<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
+        b'<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+        + b'<cellXfs count="%d">' % xf_count
+        + xfs
+        + b"</cellXfs>"
+        + b'<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
+        + b'<dxfs count="0"/>'
+        + b'<tableStyles count="0" defaultTableStyle="TableStyleMedium2" defaultPivotStyle="PivotStyleLight16"/>'
+        + b"</styleSheet>"
+    )
+
+
+def _max_style_id(entries: dict[str, bytes]) -> int:
+    max_id = 0
+    for name, data in entries.items():
+        if name.startswith(("xl/worksheets/", "xl/chartsheets/")) and name.endswith(".xml"):
+            for match in re.finditer(rb'\ss="(\d+)"', data):
+                max_id = max(max_id, int(match.group(1)))
+    return max_id
+
+
+def _with_repaired_stylesheet(buffer: bytes) -> bytes:
+    """Return the xlsx with xl/styles.xml replaced by a minimal valid one.
+
+    Some exporters (e.g. 1C) ship workbooks with missing or invalid
+    stylesheet XML; openpyxl refuses to read them even though the cell
+    data itself is fine. The replacement stylesheet must declare as many
+    cellXfs entries as the highest style id referenced by the cells,
+    otherwise openpyxl fails with IndexError while binding them.
+    """
+    with zipfile.ZipFile(io.BytesIO(buffer)) as source:
+        entries = {entry.filename: source.read(entry.filename) for entry in source.infolist()}
+    entries["xl/styles.xml"] = _minimal_styles_xml(min(_max_style_id(entries) + 1, 100_000))
+    target = io.BytesIO()
+    with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as out:
+        for name, data in entries.items():
+            out.writestr(name, data)
+    return target.getvalue()
+
+
+def _load_workbook(buffer: bytes) -> openpyxl.Workbook:
+    try:
+        return openpyxl.load_workbook(filename=io.BytesIO(buffer), data_only=True)
+    except Exception:
+        return openpyxl.load_workbook(
+            filename=io.BytesIO(_with_repaired_stylesheet(buffer)), data_only=True
+        )
+
+
+def _read_excel(buffer: bytes, **kwargs):
+    import pandas as pd
+
+    try:
+        return pd.read_excel(io.BytesIO(buffer), **kwargs)
+    except Exception:
+        return pd.read_excel(io.BytesIO(_with_repaired_stylesheet(buffer)), **kwargs)
 
 
 @dataclass
@@ -89,7 +154,7 @@ def _is_header_row(row: list[str]) -> bool:
 
 
 def parse_rating_excel_buffer(buffer: bytes) -> ParsedExcelData:
-    workbook = openpyxl.load_workbook(filename=io.BytesIO(buffer), data_only=True)
+    workbook = _load_workbook(buffer)
     main_sheet = workbook.worksheets[0]
     raw_rows = [
         [_to_string(cell.value) for cell in row]
@@ -299,9 +364,7 @@ def _normalize_key(key: str) -> str:
 
 
 def parse_flat_excel_buffer(buffer: bytes) -> list[ExcelStudentRaw]:
-    import pandas as pd
-
-    df = pd.read_excel(io.BytesIO(buffer))
+    df = _read_excel(buffer)
     mapped_keys: dict[str, str | None] = {}
     for key in df.columns:
         normalized = _normalize_key(str(key))
@@ -338,9 +401,7 @@ def parse_flat_excel_buffer(buffer: bytes) -> list[ExcelStudentRaw]:
 
 
 def has_multi_level_header(buffer: bytes) -> bool:
-    import pandas as pd
-
-    df = pd.read_excel(io.BytesIO(buffer), header=None, nrows=1)
+    df = _read_excel(buffer, header=None, nrows=1)
     if df.empty:
         return False
     first_row = [str(c).lower() for c in df.iloc[0].tolist()]
@@ -349,3 +410,19 @@ def has_multi_level_header(buffer: bytes) -> bool:
         for cell in first_row
         for kw in ["категори", "посещаем", "научн", "проект", "внеучеб"]
     )
+
+
+def parse_excel_auto(buffer: bytes) -> ParsedExcelData:
+    """Pick the right parser for an unknown layout.
+
+    Multi-level exports do not always carry a recognizable keyword in the
+    first row, so header sniffing alone misroutes them to the flat parser.
+    Fall back to the multi-level parser when the flat one extracts no
+    student names at all.
+    """
+    if has_multi_level_header(buffer):
+        return parse_rating_excel_buffer(buffer)
+    students = parse_flat_excel_buffer(buffer)
+    if any(student.full_name.strip() for student in students):
+        return ParsedExcelData(students=students, events=[])
+    return parse_rating_excel_buffer(buffer)

@@ -10,7 +10,7 @@ from security.credentials import create_credential_bundle
 from security.models import audit_event
 from users.permissions import AdminFullyAuthenticated
 
-from .parsers import has_multi_level_header, parse_flat_excel_buffer, parse_rating_excel_buffer
+from .parsers import parse_excel_auto, parse_flat_excel_buffer, parse_rating_excel_buffer
 from .services import persist_imported_data
 
 
@@ -45,11 +45,14 @@ def upload_excel_view(request):
     try:
         buffer = uploaded.read()
         _validate_xlsx(uploaded, buffer, parser)
-        if parser == "multi" or (parser == "auto" and has_multi_level_header(buffer)):
+        if parser == "multi":
             parsed = parse_rating_excel_buffer(buffer)
             students, events = parsed.students, parsed.events
-        else:
+        elif parser == "flat":
             students, events = parse_flat_excel_buffer(buffer), []
+        else:
+            parsed = parse_excel_auto(buffer)
+            students, events = parsed.students, parsed.events
         result = persist_imported_data(students, events)
         credentials = result.pop("credentials")
         if credentials:
