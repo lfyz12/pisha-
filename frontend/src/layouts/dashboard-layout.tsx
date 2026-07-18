@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
 import { Icon } from "@/components/ui/icon";
 import { AdminOnly } from "@/components/admin-only";
+import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -52,9 +53,13 @@ export default function DashboardLayout() {
         <Footer />
       </main>
       <AdminOnly>
-        <button className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 glass text-primary rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all z-40">
+        <Button
+          variant="glass"
+          size="icon"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 text-primary rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all z-40"
+        >
           <Icon name="add" fill className="text-primary" />
-        </button>
+        </Button>
       </AdminOnly>
     </div>
   );
