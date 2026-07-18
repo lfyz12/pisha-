@@ -3,6 +3,7 @@ import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUploadExcel } from "@/hooks";
+import { extractApiError } from "@/lib/api-error";
 import { KnowledgeBaseSection } from "@/pages/admin/knowledge-base";
 import { cn } from "@/lib/utils";
 import {
@@ -87,7 +88,7 @@ export default function AdminPage() {
       { file },
       {
         onError: (err) => {
-          setImportError(err instanceof Error ? err.message : "Не удалось прочитать Excel-файл");
+          setImportError(extractApiError(err, "Не удалось прочитать Excel-файл"));
         },
       }
     );

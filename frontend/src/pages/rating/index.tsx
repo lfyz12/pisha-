@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminOnly } from "@/components/admin-only";
 import { useRatingTable, useUploadExcel } from "@/hooks";
+import { extractApiError } from "@/lib/api-error";
 import type { RatingStudent, RatingStats } from "@/types";
 import { cn, formatNumber } from "@/lib/utils";
 
@@ -49,7 +50,7 @@ export default function RatingPage() {
       { file },
       {
         onError: (err) => {
-          setImportError(err instanceof Error ? err.message : "Неизвестная ошибка импорта");
+          setImportError(extractApiError(err, "Неизвестная ошибка импорта"));
         },
       }
     );
