@@ -28,7 +28,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !error.config?.headers?.["X-Skip-Auth-Redirect"]) {
       window.location.href = "/auth/login";
     }
     return Promise.reject(error);

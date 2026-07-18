@@ -11,12 +11,14 @@ interface AuthState {
   currentUser: UserAccount | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitialized: boolean;
   nextStep: AuthNextStep;
   login: (
     groupName: string,
     password: string,
     mfaCode?: string
   ) => Promise<{ success: boolean; error?: string }>;
+  rehydrate: () => Promise<void>;
   completeStep: () => void;
   setNextStep: (nextStep: AuthNextStep) => void;
   logout: () => Promise<void>;
@@ -30,10 +32,13 @@ async function ensureCsrfCookie() {
   await apiClient.get("/auth/csrf/");
 }
 
+let rehydratePromise: Promise<void> | null = null;
+
 export const useAuthStore = create<AuthState>((set) => ({
   currentUser: null,
   isAuthenticated: false,
   isLoading: false,
+  isInitialized: false,
   nextStep: null,
 
   login: async (groupName, password, mfaCode) => {
@@ -62,6 +67,31 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
       return { success: false, error: "Ошибка входа" };
     }
+  },
+
+  // Restore the session from the auth cookies after a full page reload.
+  rehydrate: () => {
+    if (!rehydratePromise) {
+      rehydratePromise = (async () => {
+        try {
+          await ensureCsrfCookie();
+          const { data } = await apiClient.post<AuthResponse>(
+            "/auth/refresh/",
+            {},
+            { headers: { "X-Skip-Auth-Redirect": "1" } }
+          );
+          set({
+            currentUser: data.data.user,
+            isAuthenticated: true,
+            nextStep: data.data.nextStep,
+            isInitialized: true,
+          });
+        } catch {
+          set({ currentUser: null, isAuthenticated: false, nextStep: null, isInitialized: true });
+        }
+      })();
+    }
+    return rehydratePromise;
   },
 
   completeStep: () => set({ nextStep: null }),

@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation } from "react-router";
 import { Icon } from "@/components/ui/icon";
 import { AdminOnly } from "@/components/admin-only";
 import { Button } from "@/components/ui/button";
+import { PageSkeleton } from "@/components/page-skeleton";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -10,6 +11,7 @@ import { useAuthStore } from "@/stores";
 export default function DashboardLayout() {
   const location = useLocation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isInitialized = useAuthStore((s) => s.isInitialized);
   const nextStep = useAuthStore((s) => s.nextStep);
   const currentUser = useAuthStore((s) => s.currentUser);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -36,6 +38,10 @@ export default function DashboardLayout() {
     desktop.addEventListener("change", closeOnDesktop);
     return () => desktop.removeEventListener("change", closeOnDesktop);
   }, []);
+
+  if (!isInitialized) {
+    return <PageSkeleton />;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/auth/login" replace />;

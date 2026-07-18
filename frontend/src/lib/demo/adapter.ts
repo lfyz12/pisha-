@@ -5,6 +5,7 @@ import type { DemoStudent } from "./db";
 import { parseRatingXlsx } from "./parse-xlsx";
 
 const DEMO_LATENCY_MS = 150;
+const DEMO_SESSION_KEY = "demo-session";
 
 const DEMO_USER = {
   id: "demo-admin",
@@ -261,9 +262,22 @@ async function demoAdapter(config: InternalAxiosRequestConfig): Promise<AxiosRes
 
   if (method === "get" && path === "/auth/csrf") return ok(config, { csrfToken: "demo" });
   if (method === "post" && path === "/auth/login") {
+    localStorage.setItem(DEMO_SESSION_KEY, "1");
     return ok(config, { user: DEMO_USER, nextStep: null });
   }
-  if (method === "post" && path === "/auth/logout") return ok(config, null);
+  if (method === "post" && path === "/auth/refresh") {
+    if (localStorage.getItem(DEMO_SESSION_KEY) === "1") {
+      return ok(config, { user: DEMO_USER, nextStep: null });
+    }
+    throw Object.assign(new Error("Authentication required"), {
+      config,
+      response: { status: 401, data: { message: "Authentication required" } },
+    });
+  }
+  if (method === "post" && path === "/auth/logout") {
+    localStorage.removeItem(DEMO_SESSION_KEY);
+    return ok(config, null);
+  }
   if (method === "post" && path === "/auth/password/forgot") {
     return ok(config, { message: "В демо-режиме пароль не требуется" });
   }
