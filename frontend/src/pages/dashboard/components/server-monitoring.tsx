@@ -16,7 +16,7 @@ export function ServerMonitoringSection() {
     : [];
 
   return (
-    <div className="bg-surface-card p-xl rounded-lg border border-border-subtle shadow-sm">
+    <div className="glass p-xl rounded-lg border shadow-sm">
       <div className="flex justify-between items-center mb-xl">
         <h3 className="text-[--text-headline-sm] font-headline-sm flex items-center space-x-sm">
           <Icon name="dns" className="text-primary" />

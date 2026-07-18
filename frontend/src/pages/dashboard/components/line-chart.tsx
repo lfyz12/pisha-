@@ -11,7 +11,7 @@ export function LineChartSection({ mockData }: LineChartSectionProps) {
   const trends: AttendanceTrend[] = mockData ?? data?.data ?? [];
 
   return (
-    <div className="bg-surface-card p-xl rounded-lg border border-border-subtle shadow-sm">
+    <div className="glass p-xl rounded-lg border shadow-sm">
       <div className="flex justify-between items-center mb-xl">
         <h3 className="text-[--text-headline-sm] font-headline-sm">Тренды посещаемости</h3>
         <div className="flex space-x-sm">
@@ -36,10 +36,7 @@ export function LineChartSection({ mockData }: LineChartSectionProps) {
         <>
           <div className="h-32 relative flex items-end">
             <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 400 100">
-              <path
-                className="stroke-primary stroke-2 fill-none"
-                d={generateSmoothPath(trends)}
-              />
+              <path className="stroke-primary stroke-2 fill-none" d={generateSmoothPath(trends)} />
               <path
                 d={`${generateSmoothPath(trends)} L400,100 L0,100 Z`}
                 fill="rgba(221, 94, 39, 0.05)"

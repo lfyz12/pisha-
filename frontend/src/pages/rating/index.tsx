@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo } from "react";
 import { Icon } from "@/components/ui/icon";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminOnly } from "@/components/admin-only";
 import { useRatingTable, useUploadExcel } from "@/hooks";
@@ -123,14 +124,16 @@ export default function RatingPage() {
                 onChange={handleFileUpload}
                 className="hidden"
               />
-              <button
+              <Button
+                variant="glass"
+                size="sm"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadExcel.isPending}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-label border border-border-subtle text-secondary hover:text-primary hover:border-primary transition-colors disabled:opacity-50"
+                className="rounded-lg font-label"
               >
                 <Icon name={uploadExcel.isPending ? "hourglass_empty" : "upload_file"} />
                 {uploadExcel.isPending ? "Импорт..." : "Excel"}
-              </button>
+              </Button>
             </AdminOnly>
           </div>
         </div>

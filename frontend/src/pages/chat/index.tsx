@@ -2,6 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { Icon } from "@/components/ui/icon";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,7 +53,12 @@ function formatTime(ts: string) {
 
 const MessageBubble = memo(function MessageBubble({ msg }: { msg: LiveMessage }) {
   return (
-    <div className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
+    <div
+      className={cn(
+        "flex animate-message-in",
+        msg.role === "user" ? "justify-end" : "justify-start"
+      )}
+    >
       <div
         className={cn(
           "max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed",
@@ -312,16 +318,17 @@ export default function ChatPage() {
 
   return (
     <div className="flex gap-4 h-[calc(100vh-8rem)]">
-      <aside className="hidden md:flex w-72 shrink-0 flex-col bg-surface-card border border-border-subtle rounded-xl overflow-hidden">
+      <aside className="hidden md:flex w-72 shrink-0 flex-col glass border rounded-xl overflow-hidden">
         <div className="p-3 border-b border-border-subtle">
-          <button
+          <Button
+            variant="glass"
             onClick={handleNewChat}
             disabled={isStreaming}
-            className="w-full bg-primary text-on-primary font-bold py-2 rounded-lg text-sm hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full font-bold rounded-lg"
           >
             <Icon name="add" className="text-lg" />
             Новый чат
-          </button>
+          </Button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-1">

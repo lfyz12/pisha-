@@ -60,7 +60,7 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <section className="bg-surface-card rounded-xl border border-border-subtle p-4 sm:p-6">
+      <section className="glass rounded-xl border p-4 sm:p-6 animate-fade-up">
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
           <div className="shrink-0 self-center sm:self-auto">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary flex items-center justify-center text-white text-2xl sm:text-3xl font-headline font-bold leading-none border-4 border-surface-card shadow-lg">
@@ -102,9 +102,9 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-up motion-delay-100">
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-surface-card rounded-xl border border-border-subtle p-4 sm:p-6">
+          <div className="glass rounded-xl border p-4 sm:p-6">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-base sm:text-lg font-headline font-bold text-text-main">
                 Личная информация
@@ -216,7 +216,7 @@ export default function ProfilePage() {
             </form>
           </div>
 
-          <div className="bg-surface-card rounded-xl border border-border-subtle p-4 sm:p-6">
+          <div className="glass rounded-xl border p-4 sm:p-6">
             <h2 className="text-base sm:text-lg font-headline font-bold text-text-main mb-5">
               Безопасность
             </h2>
@@ -283,7 +283,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-surface-card rounded-xl border border-border-subtle p-4 sm:p-6">
+          <div className="glass rounded-xl border p-4 sm:p-6">
             <h3 className="text-xs font-label text-secondary uppercase tracking-wider mb-4">
               Сессия
             </h3>
@@ -314,7 +314,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="bg-surface-card rounded-xl border border-border-subtle p-4 sm:p-6">
+          <div className="glass rounded-xl border p-4 sm:p-6">
             <h3 className="text-xs font-label text-secondary uppercase tracking-wider mb-4">
               Статистика
             </h3>
@@ -377,7 +377,7 @@ export default function ProfilePage() {
           </div>
 
           {!isAdmin && (
-            <div className="bg-surface-card rounded-xl border border-border-subtle p-4 sm:p-6">
+            <div className="glass rounded-xl border p-4 sm:p-6">
               <h3 className="text-xs font-label text-secondary uppercase tracking-wider mb-4">
                 Мои проекты
               </h3>
@@ -388,7 +388,7 @@ export default function ProfilePage() {
       </section>
 
       {!isAdmin && ratingStudents.length > 0 && (
-        <section className="bg-surface-card rounded-xl border border-border-subtle p-4 sm:p-6">
+        <section className="glass rounded-xl border p-4 sm:p-6 animate-fade-up motion-delay-200">
           <h2 className="text-base sm:text-lg font-headline font-bold text-text-main mb-4">
             Успеваемость
           </h2>

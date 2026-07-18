@@ -26,7 +26,7 @@ export function MetricCard({
 }: MetricCardProps) {
   if (isLoading) {
     return (
-      <div className="bg-surface-card p-lg rounded-lg border border-border-subtle flex flex-col justify-between min-h-[140px] overflow-hidden">
+      <div className="glass p-lg rounded-lg border flex flex-col justify-between min-h-[140px] overflow-hidden">
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-8 w-20 mt-sm" />
         <Skeleton className="h-6 w-6 mt-auto" />
@@ -36,7 +36,7 @@ export function MetricCard({
 
   if (error) {
     return (
-      <div className="bg-surface-card p-lg rounded-lg border border-border-subtle flex flex-col justify-between min-h-[140px] overflow-hidden">
+      <div className="glass p-lg rounded-lg border flex flex-col justify-between min-h-[140px] overflow-hidden">
         <span className="text-[--text-label-md] font-label-md text-secondary uppercase block leading-tight">
           {label}
         </span>
@@ -47,7 +47,7 @@ export function MetricCard({
   }
 
   return (
-    <div className="bg-surface-card p-lg rounded-lg border border-border-subtle hover:-translate-y-0.5 hover:shadow-md flex flex-col justify-between min-h-[140px] overflow-hidden transition-all duration-200">
+    <div className="glass p-lg rounded-lg border hover:-translate-y-0.5 hover:shadow-md flex flex-col justify-between min-h-[140px] overflow-hidden transition-all duration-200">
       <span className="text-[--text-label-md] font-label-md text-secondary uppercase block leading-tight">
         {label}
       </span>

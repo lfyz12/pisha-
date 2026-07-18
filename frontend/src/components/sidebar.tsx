@@ -75,8 +75,8 @@ export function Sidebar({ isOpen, onClose, isMobile }: SidebarProps) {
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 text-left",
                 active
-                  ? "bg-primary-fixed text-primary font-semibold"
-                  : "text-secondary hover:bg-surface-container-low hover:text-text-main"
+                  ? "glass-pill-strong text-primary font-semibold"
+                  : "text-secondary hover:glass-pill hover:text-text-main"
               )}
             >
               <Icon name={item.icon} fill={active} className="text-[20px]" />
@@ -106,7 +106,7 @@ export function Sidebar({ isOpen, onClose, isMobile }: SidebarProps) {
           onClick={() => handleNav("/dashboard/profile")}
           onMouseEnter={() => prefetchRoute("/dashboard/profile")}
           onFocus={() => prefetchRoute("/dashboard/profile")}
-          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-secondary hover:text-text-main hover:bg-surface-container-low rounded-lg transition-all text-left"
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-secondary hover:text-text-main hover:glass-pill rounded-lg transition-all text-left"
         >
           <Icon name="account_circle" className="text-[20px]" />
           <span>Профиль</span>
@@ -126,7 +126,7 @@ export function Sidebar({ isOpen, onClose, isMobile }: SidebarProps) {
         )}
         <aside
           className={cn(
-            "fixed top-0 left-0 h-full w-64 bg-surface-card z-50 shadow-2xl transition-transform duration-300 ease-out",
+            "fixed top-0 left-0 h-full w-64 glass z-50 shadow-2xl transition-transform duration-300 ease-out",
             isOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
@@ -137,7 +137,7 @@ export function Sidebar({ isOpen, onClose, isMobile }: SidebarProps) {
   }
 
   return (
-    <aside className="hidden lg:flex h-screen w-64 flex-col sticky top-0 left-0 border-r border-border-subtle bg-surface-card z-40">
+    <aside className="hidden lg:flex h-screen w-64 flex-col sticky top-0 left-0 border-r glass z-40">
       <div className="flex flex-col h-full">{content}</div>
     </aside>
   );

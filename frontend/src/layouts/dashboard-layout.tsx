@@ -38,7 +38,8 @@ export default function DashboardLayout() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen">
+      <div className="app-background" aria-hidden="true" />
       <Sidebar />
 
       <Sidebar isMobile isOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
@@ -51,8 +52,8 @@ export default function DashboardLayout() {
         <Footer />
       </main>
       <AdminOnly>
-        <button className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all z-40">
-          <Icon name="add" fill className="text-on-primary" />
+        <button className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 glass text-primary rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all z-40">
+          <Icon name="add" fill className="text-primary" />
         </button>
       </AdminOnly>
     </div>

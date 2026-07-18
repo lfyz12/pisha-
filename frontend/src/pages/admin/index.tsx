@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
+import { Button } from "@/components/ui/button";
 import { useUploadExcel } from "@/hooks";
 import { KnowledgeBaseSection } from "@/pages/admin/knowledge-base";
 import { cn } from "@/lib/utils";
@@ -177,17 +178,18 @@ export default function AdminPage() {
                 </div>
               )}
 
-              <button
+              <Button
+                variant="glass"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadExcel.isPending}
-                className="w-full bg-primary text-on-primary font-bold py-2.5 rounded-lg text-sm hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full font-bold rounded-lg"
               >
                 <Icon
                   name={uploadExcel.isPending ? "hourglass_empty" : "upload"}
                   className="text-lg"
                 />
                 {uploadExcel.isPending ? "Импорт..." : "Выбрать файл"}
-              </button>
+              </Button>
 
               {summary && (
                 <div className="space-y-2">

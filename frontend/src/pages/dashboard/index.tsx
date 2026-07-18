@@ -21,7 +21,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-xl">
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-lg">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-lg animate-fade-up">
         <MetricCard
           label="Всего студентов"
           value={metricsLoading ? undefined : m?.totalStudents?.toString()}
@@ -67,20 +67,20 @@ export default function DashboardPage() {
         />
       </section>
 
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-lg">
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-lg animate-fade-up motion-delay-100">
         <BarChartSection />
         <LineChartSection />
       </section>
 
       <AdminOnly>
-        <section className="grid grid-cols-1 xl:grid-cols-3 gap-lg">
+        <section className="grid grid-cols-1 xl:grid-cols-3 gap-lg animate-fade-up motion-delay-200">
           <StudentTableSection />
           <ScoringFormSection />
         </section>
       </AdminOnly>
 
       <AdminOnly>
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-lg">
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-lg animate-fade-up motion-delay-300">
           <ServerMonitoringSection />
           <AILogicBuilderSection />
         </section>
