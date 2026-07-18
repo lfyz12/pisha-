@@ -12,7 +12,7 @@ export function BarChartSection({ mockData }: BarChartSectionProps) {
   const bars: GpaBarData[] = mockData ?? data?.data ?? [];
 
   return (
-    <div className="glass p-xl rounded-lg border shadow-sm">
+    <div className="glass-card p-xl rounded-lg border shadow-sm">
       <div className="flex justify-between items-center mb-xl">
         <h3 className="text-[--text-headline-sm] font-headline-sm">Распределение баллов</h3>
         <Icon name="more_vert" className="text-secondary" />

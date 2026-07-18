@@ -11,7 +11,7 @@ export function LineChartSection({ mockData }: LineChartSectionProps) {
   const trends: AttendanceTrend[] = mockData ?? data?.data ?? [];
 
   return (
-    <div className="glass p-xl rounded-lg border shadow-sm">
+    <div className="glass-card p-xl rounded-lg border shadow-sm">
       <div className="flex justify-between items-center mb-xl">
         <h3 className="text-[--text-headline-sm] font-headline-sm">Тренды посещаемости</h3>
         <div className="flex space-x-sm">

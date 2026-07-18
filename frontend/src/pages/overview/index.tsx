@@ -75,7 +75,7 @@ export default function OverviewPage() {
       )}
 
       <section className="grid grid-cols-1 md:grid-cols-12 gap-6 animate-fade-up motion-delay-100">
-        <div className="md:col-span-5 glass p-6 rounded-xl border-t-4 border-primary flex flex-col justify-between">
+        <div className="md:col-span-5 glass-card p-6 rounded-xl border-t-4 border-primary flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-xs font-label uppercase tracking-widest text-secondary">
@@ -132,7 +132,7 @@ export default function OverviewPage() {
         </div>
 
         <div className="md:col-span-7 grid grid-cols-2 gap-4">
-          <div className="glass p-5 rounded-xl border-t-2">
+          <div className="glass-card p-5 rounded-xl border-t-2">
             <div className="flex justify-between mb-2">
               <Icon name="grade" className="text-primary text-xl" />
               <span className="text-xs font-label text-secondary">
@@ -152,7 +152,7 @@ export default function OverviewPage() {
               </div>
             )}
           </div>
-          <div className="glass p-5 rounded-xl border-t-2">
+          <div className="glass-card p-5 rounded-xl border-t-2">
             <div className="flex justify-between mb-2">
               <Icon name="event_available" className="text-primary text-xl" />
               <span className="text-xs font-label text-secondary">Посещаемость</span>
@@ -168,7 +168,7 @@ export default function OverviewPage() {
               <Icon name="trending_up" className="text-sm" /> Стабильно
             </div>
           </div>
-          <div className="glass p-5 rounded-xl border-t-2">
+          <div className="glass-card p-5 rounded-xl border-t-2">
             <div className="flex justify-between mb-2">
               <Icon name="architecture" className="text-primary text-xl" />
               <span className="text-xs font-label text-secondary">Проекты</span>
@@ -188,7 +188,7 @@ export default function OverviewPage() {
                   : "Текущих проектов"}
             </div>
           </div>
-          <div className="glass p-5 rounded-xl border-t-2">
+          <div className="glass-card p-5 rounded-xl border-t-2">
             <div className="flex justify-between mb-2">
               <Icon name="bolt" className="text-primary text-xl" />
               <span className="text-xs font-label text-secondary">Активность</span>
@@ -214,8 +214,8 @@ export default function OverviewPage() {
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 animate-fade-up motion-delay-200">
-        <div className="lg:col-span-2 glass rounded-xl overflow-hidden flex flex-col">
-          <div className="p-4 sm:p-5 border-b border-border-subtle flex justify-between items-center bg-surface-container-low">
+        <div className="lg:col-span-2 glass-card rounded-xl overflow-hidden flex flex-col">
+          <div className="p-4 sm:p-5 border-b border-border-subtle flex justify-between items-center bg-surface-container-low/60">
             <h3 className="text-sm font-headline font-bold">Лидерборд Студентов</h3>
             <button
               onClick={() => navigate("/dashboard/rating")}
@@ -233,7 +233,7 @@ export default function OverviewPage() {
                 <col className="w-[80px]" />
                 <col className="w-[72px]" />
               </colgroup>
-              <thead className="bg-surface-container-low text-xs text-secondary border-b border-border-subtle">
+              <thead className="bg-surface-container-low/60 text-xs text-secondary border-b border-border-subtle">
                 <tr>
                   <th className="px-5 py-3 font-bold">Место</th>
                   <th className="px-5 py-3 font-bold">Студент</th>
@@ -425,7 +425,7 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        <div className="glass rounded-xl p-6 border-t-2 flex flex-col items-center justify-center">
+        <div className="glass-card rounded-xl p-6 border-t-2 flex flex-col items-center justify-center">
           <h3 className="text-xs font-bold uppercase tracking-widest text-secondary self-start mb-4">
             Аналитический радар
           </h3>
@@ -504,7 +504,7 @@ export default function OverviewPage() {
               Стипендии и гранты
             </h3>
             <div className="space-y-3">
-              <div className="glass p-4 rounded-lg border-l-4 border-status-success flex justify-between items-center">
+              <div className="glass-card p-4 rounded-lg border-l-4 border-status-success flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 bg-surface-container rounded flex items-center justify-center">
                     <Icon name="token" className="text-primary" />
@@ -520,7 +520,7 @@ export default function OverviewPage() {
                   Подать заявку
                 </button>
               </div>
-              <div className="glass p-4 rounded-lg border-l-4 border-primary flex justify-between items-center">
+              <div className="glass-card p-4 rounded-lg border-l-4 border-primary flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 bg-surface-container rounded flex items-center justify-center">
                     <Icon name="factory" className="text-primary" />
@@ -536,7 +536,7 @@ export default function OverviewPage() {
                   Подробнее
                 </button>
               </div>
-              <div className="glass p-4 rounded-lg border-l-4 border-secondary flex justify-between items-center opacity-60">
+              <div className="glass-card p-4 rounded-lg border-l-4 border-secondary flex justify-between items-center opacity-60">
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 bg-surface-container rounded flex items-center justify-center">
                     <Icon name="school" className="text-secondary" />
@@ -551,8 +551,8 @@ export default function OverviewPage() {
             </div>
           </div>
 
-          <div className="glass rounded-xl border flex flex-col h-[400px]">
-            <div className="p-4 border-b border-border-subtle flex items-center gap-3 bg-surface-container-lowest">
+          <div className="glass-card rounded-xl border flex flex-col h-[400px]">
+            <div className="p-4 border-b border-border-subtle flex items-center gap-3 bg-surface-container-low/60">
               <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                 <Icon name="smart_toy" fill className="text-on-primary text-lg" />
               </div>

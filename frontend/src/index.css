@@ -238,15 +238,6 @@ layer(base);
   animation: message-in 250ms ease-out both;
 }
 
-@utility animate-ambient-drift {
-  animation: ambient-drift 50s ease-in-out infinite alternate;
-}
-
-@utility animate-ambient-drift-slow {
-  animation: ambient-drift 60s ease-in-out infinite alternate-reverse;
-  animation-delay: -25s;
-}
-
 @utility glass {
   background: color-mix(in srgb, var(--color-surface-card) 75%, transparent);
   backdrop-filter: blur(16px) saturate(1.4);
@@ -254,11 +245,11 @@ layer(base);
   border-color: color-mix(in srgb, var(--color-border-subtle) 60%, transparent);
 }
 
-@utility glass-strong {
-  background: color-mix(in srgb, var(--color-surface-card) 85%, transparent);
-  backdrop-filter: blur(16px) saturate(1.4);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
-  border-color: color-mix(in srgb, var(--color-border-subtle) 70%, transparent);
+@utility glass-card {
+  background: color-mix(in srgb, var(--color-surface-card) 82%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: color-mix(in srgb, var(--color-border-subtle) 60%, transparent);
 }
 
 @utility glass-btn {
@@ -282,8 +273,6 @@ layer(base);
 
 @utility glass-pill {
   background: color-mix(in srgb, var(--color-surface-container-high) 55%, transparent);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 @utility glass-pill-strong {
@@ -292,8 +281,6 @@ layer(base);
     var(--color-primary) 15%,
     color-mix(in srgb, var(--color-surface-container-high) 55%, transparent)
   );
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 @layer components {

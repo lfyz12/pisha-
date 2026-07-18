@@ -9,7 +9,7 @@ export function AILogicBuilderSection() {
   const rules: AIRule[] = data?.data ?? [];
 
   return (
-    <div className="glass p-xl rounded-lg border shadow-sm overflow-hidden relative">
+    <div className="glass-card p-xl rounded-lg border shadow-sm overflow-hidden relative">
       <div className="absolute top-0 right-0 w-32 h-32 opacity-10 -mr-8 -mt-8">
         <Icon name="psychology" className="text-[120px] text-primary" />
       </div>

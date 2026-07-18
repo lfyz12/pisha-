@@ -49,7 +49,7 @@ export function ScoringFormSection() {
 
   return (
     <AdminOnly>
-      <div className="glass p-xl rounded-lg border shadow-sm flex flex-col">
+      <div className="glass-card p-xl rounded-lg border shadow-sm flex flex-col">
         <h3 className="text-[--text-headline-sm] font-headline-sm mb-lg">Начисление баллов</h3>
         <form className="space-y-md flex-1" onSubmit={handleSubmit}>
           <div>
