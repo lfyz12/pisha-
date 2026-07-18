@@ -34,3 +34,10 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Демо-режим (VITE_DEMO_MODE=true): запросы обслуживаются локально, без backend'а.
+// В обычной сборке эта ветка удаляется минификатором вместе с динамическим импортом.
+if (import.meta.env.VITE_DEMO_MODE === "true") {
+  const { installDemoAdapter } = await import("@/lib/demo/adapter");
+  installDemoAdapter(apiClient);
+}

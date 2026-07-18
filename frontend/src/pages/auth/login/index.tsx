@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { QRCodeSVG } from "qrcode.react";
 
 import { Icon } from "@/components/ui/icon";
+import { config } from "@/config";
 import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores";
 
@@ -122,6 +123,11 @@ export default function LoginPage() {
 
   return (
     <SecurityShell title={nextStep === "mfa_required" ? "Подтвердите вход" : "Вход в систему"}>
+      {config.demo && (
+        <p className="text-center text-sm text-secondary">
+          Демо-режим: введите любой логин и пароль
+        </p>
+      )}
       {error && <p className="text-status-error text-sm">{error}</p>}
       <form className="space-y-4" onSubmit={handleLogin}>
         {nextStep !== "mfa_required" && (

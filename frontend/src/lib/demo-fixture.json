@@ -1,0 +1,851 @@
+{
+  "students": [
+    {
+      "group_name": "ПШ-110101",
+      "full_name": "Зайцева Елена Андреевна",
+      "total_score": 12.69,
+      "average_score": 4.84,
+      "attendance": [8, 0, 6, 0, 1, 6],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220102",
+      "full_name": "Новикова Наталья Андреевна",
+      "total_score": 12.27,
+      "average_score": 4.59,
+      "attendance": [2, 1, 4, 8, 5, 1],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-440101",
+      "full_name": "Петрова Анна Андреевна",
+      "total_score": 11.85,
+      "average_score": 4.07,
+      "attendance": [6, 1, 8, 4, 5, 3],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220101",
+      "full_name": "Богданова Татьяна Андреевна",
+      "total_score": 11.83,
+      "average_score": 4.87,
+      "attendance": [3, 6, 3, 6, 0, 5],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330112",
+      "full_name": "Морозова Анастасия Александровна",
+      "total_score": 11.64,
+      "average_score": 4.71,
+      "attendance": [6, 4, 7, 5, 2, 5],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330112",
+      "full_name": "Козлова Наталья Сергеевна",
+      "total_score": 11.59,
+      "average_score": 4.23,
+      "attendance": [7, 7, 6, 4, 5, 3],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330112",
+      "full_name": "Кузнецова Дарья Сергеевна",
+      "total_score": 11.52,
+      "average_score": 4.1,
+      "attendance": [7, 7, 1, 0, 3, 2],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-440101",
+      "full_name": "Фёдорова Мария Дмитриевна",
+      "total_score": 11.34,
+      "average_score": 3.81,
+      "attendance": [3, 0, 1, 6, 8, 5],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-440101",
+      "full_name": "Павлов Алексей Сергеевич",
+      "total_score": 10.97,
+      "average_score": 3.31,
+      "attendance": [5, 1, 1, 6, 1, 5],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330101",
+      "full_name": "Голубева Дарья Алексеевна",
+      "total_score": 10.74,
+      "average_score": 3.26,
+      "attendance": [7, 3, 7, 6, 3, 1],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220101",
+      "full_name": "Смирнов Дмитрий Алексеевич",
+      "total_score": 10.65,
+      "average_score": 4.5,
+      "attendance": [5, 1, 4, 6, 2, 7],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220102",
+      "full_name": "Кузнецова Мария Дмитриевна",
+      "total_score": 10.59,
+      "average_score": 4.25,
+      "attendance": [6, 1, 6, 6, 7, 8],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330112",
+      "full_name": "Петрова Елена Алексеевна",
+      "total_score": 10.38,
+      "average_score": 3.87,
+      "attendance": [1, 7, 5, 6, 5, 5],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220102",
+      "full_name": "Петрова Ольга Сергеевна",
+      "total_score": 10.37,
+      "average_score": 4.76,
+      "attendance": [4, 8, 0, 8, 3, 1],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220101",
+      "full_name": "Семёнов Андрей Андреевич",
+      "total_score": 10.23,
+      "average_score": 4.39,
+      "attendance": [8, 7, 2, 3, 4, 3],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330101",
+      "full_name": "Новиков Андрей Андреевич",
+      "total_score": 10.19,
+      "average_score": 4.99,
+      "attendance": [7, 8, 7, 1, 3, 3],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220101",
+      "full_name": "Богданов Артём Александрович",
+      "total_score": 10.18,
+      "average_score": 3.45,
+      "attendance": [1, 7, 1, 2, 7, 4],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220102",
+      "full_name": "Козлов Максим Дмитриевич",
+      "total_score": 10.13,
+      "average_score": 3.16,
+      "attendance": [3, 7, 2, 3, 7, 4],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-440101",
+      "full_name": "Семёнов Максим Андреевич",
+      "total_score": 9.91,
+      "average_score": 3.9,
+      "attendance": [4, 8, 7, 3, 4, 7],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110101",
+      "full_name": "Васильев Артём Андреевич",
+      "total_score": 9.76,
+      "average_score": 3.93,
+      "attendance": [1, 0, 6, 5, 1, 3],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-440101",
+      "full_name": "Кузнецов Алексей Дмитриевич",
+      "total_score": 9.7,
+      "average_score": 4.36,
+      "attendance": [5, 8, 6, 2, 3, 2],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220102",
+      "full_name": "Волков Никита Алексеевич",
+      "total_score": 9.56,
+      "average_score": 3.02,
+      "attendance": [4, 1, 2, 4, 1, 1],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110102",
+      "full_name": "Голубев Кирилл Дмитриевич",
+      "total_score": 9.55,
+      "average_score": 4.38,
+      "attendance": [7, 7, 0, 1, 4, 3],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110101",
+      "full_name": "Волков Никита Андреевич",
+      "total_score": 9.51,
+      "average_score": 3.79,
+      "attendance": [1, 3, 1, 4, 1, 0],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220102",
+      "full_name": "Лебедева Татьяна Дмитриевна",
+      "total_score": 9.4,
+      "average_score": 3.15,
+      "attendance": [4, 5, 6, 1, 5, 8],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330101",
+      "full_name": "Лебедева Екатерина Александровна",
+      "total_score": 9.34,
+      "average_score": 4.75,
+      "attendance": [7, 7, 7, 5, 2, 0],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110101",
+      "full_name": "Лебедева Наталья Александровна",
+      "total_score": 9.33,
+      "average_score": 4.67,
+      "attendance": [2, 6, 2, 0, 4, 5],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220101",
+      "full_name": "Соловьёва Дарья Сергеевна",
+      "total_score": 9.16,
+      "average_score": 3.79,
+      "attendance": [4, 7, 5, 1, 0, 7],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220101",
+      "full_name": "Павлова Анна Алексеевна",
+      "total_score": 9.16,
+      "average_score": 4.85,
+      "attendance": [3, 5, 6, 1, 5, 5],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-440101",
+      "full_name": "Петров Илья Дмитриевич",
+      "total_score": 9.06,
+      "average_score": 4.5,
+      "attendance": [6, 5, 0, 7, 5, 2],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220101",
+      "full_name": "Зайцева Татьяна Алексеевна",
+      "total_score": 8.87,
+      "average_score": 4.5,
+      "attendance": [3, 7, 3, 4, 6, 7],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330112",
+      "full_name": "Петрова Елена Дмитриевна",
+      "total_score": 8.8,
+      "average_score": 4.49,
+      "attendance": [6, 6, 5, 3, 2, 8],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-440101",
+      "full_name": "Воробьёва Анастасия Андреевна",
+      "total_score": 8.76,
+      "average_score": 3.25,
+      "attendance": [6, 4, 8, 8, 7, 7],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330112",
+      "full_name": "Зайцев Илья Андреевич",
+      "total_score": 8.74,
+      "average_score": 3.49,
+      "attendance": [0, 1, 6, 3, 2, 8],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220101",
+      "full_name": "Зайцева Наталья Александровна",
+      "total_score": 8.66,
+      "average_score": 4.32,
+      "attendance": [6, 0, 3, 8, 5, 7],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110102",
+      "full_name": "Фёдорова Анна Алексеевна",
+      "total_score": 8.6,
+      "average_score": 3.4,
+      "attendance": [8, 6, 3, 7, 4, 0],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220101",
+      "full_name": "Петрова Мария Алексеевна",
+      "total_score": 8.54,
+      "average_score": 4.27,
+      "attendance": [3, 2, 7, 6, 4, 8],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-440101",
+      "full_name": "Голубева Дарья Дмитриевна",
+      "total_score": 8.31,
+      "average_score": 4.63,
+      "attendance": [4, 3, 3, 0, 3, 6],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330112",
+      "full_name": "Петрова Ирина Дмитриевна",
+      "total_score": 8.21,
+      "average_score": 3.85,
+      "attendance": [2, 4, 2, 1, 0, 2],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220102",
+      "full_name": "Волков Никита Сергеевич",
+      "total_score": 8.2,
+      "average_score": 3.95,
+      "attendance": [6, 8, 5, 5, 7, 4],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330101",
+      "full_name": "Смирнова Татьяна Андреевна",
+      "total_score": 8.14,
+      "average_score": 4.38,
+      "attendance": [0, 3, 4, 4, 7, 1],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-440101",
+      "full_name": "Зайцева Екатерина Александровна",
+      "total_score": 8.05,
+      "average_score": 3.47,
+      "attendance": [4, 4, 0, 6, 4, 0],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330112",
+      "full_name": "Козлов Никита Алексеевич",
+      "total_score": 7.98,
+      "average_score": 3.6,
+      "attendance": [0, 4, 4, 3, 6, 5],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110101",
+      "full_name": "Морозов Андрей Сергеевич",
+      "total_score": 7.96,
+      "average_score": 3.64,
+      "attendance": [2, 2, 3, 6, 2, 3],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330101",
+      "full_name": "Павлов Илья Андреевич",
+      "total_score": 7.9,
+      "average_score": 3.49,
+      "attendance": [6, 3, 8, 2, 1, 4],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110102",
+      "full_name": "Кузнецов Сергей Александрович",
+      "total_score": 7.82,
+      "average_score": 4.61,
+      "attendance": [1, 3, 5, 3, 7, 6],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-440101",
+      "full_name": "Смирнова Наталья Александровна",
+      "total_score": 7.8,
+      "average_score": 5.0,
+      "attendance": [1, 0, 0, 3, 3, 0],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110101",
+      "full_name": "Богданов Александр Сергеевич",
+      "total_score": 7.78,
+      "average_score": 3.11,
+      "attendance": [8, 8, 2, 0, 8, 1],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-440101",
+      "full_name": "Попова Дарья Дмитриевна",
+      "total_score": 7.66,
+      "average_score": 3.81,
+      "attendance": [6, 0, 2, 6, 0, 6],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220101",
+      "full_name": "Соколова Дарья Сергеевна",
+      "total_score": 7.53,
+      "average_score": 3.24,
+      "attendance": [2, 3, 3, 7, 4, 8],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220101",
+      "full_name": "Попова Анастасия Сергеевна",
+      "total_score": 7.48,
+      "average_score": 4.28,
+      "attendance": [8, 5, 0, 1, 4, 2],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-440101",
+      "full_name": "Павлов Александр Дмитриевич",
+      "total_score": 7.13,
+      "average_score": 4.47,
+      "attendance": [6, 3, 4, 2, 1, 6],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110102",
+      "full_name": "Семёнова Елена Андреевна",
+      "total_score": 7.07,
+      "average_score": 3.37,
+      "attendance": [1, 7, 8, 1, 0, 8],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110101",
+      "full_name": "Попов Кирилл Дмитриевич",
+      "total_score": 7.06,
+      "average_score": 3.26,
+      "attendance": [8, 2, 4, 8, 6, 3],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220102",
+      "full_name": "Морозова Мария Андреевна",
+      "total_score": 6.99,
+      "average_score": 3.27,
+      "attendance": [8, 8, 5, 7, 8, 6],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330101",
+      "full_name": "Петров Александр Александрович",
+      "total_score": 6.96,
+      "average_score": 4.19,
+      "attendance": [5, 6, 8, 1, 6, 3],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330112",
+      "full_name": "Волков Кирилл Сергеевич",
+      "total_score": 6.94,
+      "average_score": 4.33,
+      "attendance": [4, 8, 2, 3, 6, 6],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330112",
+      "full_name": "Козлова Ольга Андреевна",
+      "total_score": 6.7,
+      "average_score": 4.39,
+      "attendance": [6, 8, 0, 7, 1, 5],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220101",
+      "full_name": "Кузнецов Никита Александрович",
+      "total_score": 6.56,
+      "average_score": 4.9,
+      "attendance": [3, 4, 1, 2, 3, 2],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110101",
+      "full_name": "Павлов Никита Алексеевич",
+      "total_score": 6.39,
+      "average_score": 4.58,
+      "attendance": [8, 6, 7, 7, 4, 6],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330112",
+      "full_name": "Петров Андрей Алексеевич",
+      "total_score": 6.16,
+      "average_score": 3.42,
+      "attendance": [4, 8, 7, 4, 0, 1],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220102",
+      "full_name": "Голубев Кирилл Александрович",
+      "total_score": 6.11,
+      "average_score": 4.23,
+      "attendance": [4, 3, 1, 6, 1, 1],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330101",
+      "full_name": "Лебедева Екатерина Александровна",
+      "total_score": 5.87,
+      "average_score": 4.13,
+      "attendance": [4, 5, 2, 1, 2, 4],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-440101",
+      "full_name": "Морозов Андрей Дмитриевич",
+      "total_score": 5.79,
+      "average_score": 4.61,
+      "attendance": [0, 3, 7, 1, 7, 6],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220102",
+      "full_name": "Смирнова Екатерина Сергеевна",
+      "total_score": 5.62,
+      "average_score": 4.36,
+      "attendance": [7, 5, 4, 6, 4, 7],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330101",
+      "full_name": "Соколов Дмитрий Алексеевич",
+      "total_score": 5.55,
+      "average_score": 3.43,
+      "attendance": [5, 1, 3, 5, 4, 2],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110101",
+      "full_name": "Соловьёва Наталья Андреевна",
+      "total_score": 5.48,
+      "average_score": 3.83,
+      "attendance": [6, 6, 0, 6, 7, 0],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110102",
+      "full_name": "Козлов Александр Сергеевич",
+      "total_score": 5.45,
+      "average_score": 3.76,
+      "attendance": [5, 5, 6, 4, 6, 4],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330101",
+      "full_name": "Соколова Дарья Сергеевна",
+      "total_score": 4.89,
+      "average_score": 3.45,
+      "attendance": [0, 8, 2, 4, 0, 0],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110101",
+      "full_name": "Петров Кирилл Дмитриевич",
+      "total_score": 4.87,
+      "average_score": 4.02,
+      "attendance": [4, 8, 3, 2, 5, 2],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330112",
+      "full_name": "Петрова Анна Александровна",
+      "total_score": 4.72,
+      "average_score": 3.67,
+      "attendance": [4, 2, 7, 8, 6, 8],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220101",
+      "full_name": "Васильев Дмитрий Алексеевич",
+      "total_score": 4.4,
+      "average_score": 4.3,
+      "attendance": [6, 7, 1, 6, 5, 7],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220101",
+      "full_name": "Голубев Дмитрий Александрович",
+      "total_score": 4.39,
+      "average_score": 3.8,
+      "attendance": [0, 2, 2, 4, 1, 3],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330112",
+      "full_name": "Зайцева Татьяна Дмитриевна",
+      "total_score": 4.29,
+      "average_score": 3.99,
+      "attendance": [8, 5, 1, 7, 1, 8],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110101",
+      "full_name": "Воробьёва Наталья Дмитриевна",
+      "total_score": 4.24,
+      "average_score": 4.18,
+      "attendance": [0, 3, 1, 0, 5, 1],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-110101",
+      "full_name": "Павлов Алексей Алексеевич",
+      "total_score": 4.23,
+      "average_score": 3.5,
+      "attendance": [0, 4, 0, 2, 7, 8],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330112",
+      "full_name": "Петрова Дарья Дмитриевна",
+      "total_score": 4.1,
+      "average_score": 3.28,
+      "attendance": [8, 1, 6, 0, 0, 1],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-220102",
+      "full_name": "Волкова Анна Александровна",
+      "total_score": 4.1,
+      "average_score": 3.65,
+      "attendance": [5, 5, 6, 2, 3, 8],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-330101",
+      "full_name": "Виноградов Александр Алексеевич",
+      "total_score": 3.81,
+      "average_score": 3.65,
+      "attendance": [5, 4, 3, 0, 3, 1],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    },
+    {
+      "group_name": "ПШ-440101",
+      "full_name": "Павлов Алексей Алексеевич",
+      "total_score": 3.55,
+      "average_score": 3.53,
+      "attendance": [4, 7, 2, 7, 8, 7],
+      "science_activity": {},
+      "project_activity": {},
+      "extracurricular": {}
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "name": "Хакатон «Цифровой прорыв»",
+      "category": "Проектная деятельность",
+      "date": "2026-03-15",
+      "level": "Всероссийский",
+      "status": "Завершено",
+      "points": 10
+    },
+    {
+      "id": 2,
+      "name": "Олимпиада по программированию",
+      "category": "Учебная деятельность",
+      "date": "2026-04-02",
+      "level": "Региональный",
+      "status": "Завершено",
+      "points": 8
+    },
+    {
+      "id": 3,
+      "name": "Спартакиада",
+      "category": "Спорт",
+      "date": "2026-05-20",
+      "level": "Городской",
+      "status": "Завершено",
+      "points": 5
+    },
+    {
+      "id": 4,
+      "name": "Неделя науки",
+      "category": "Научная деятельность",
+      "date": "2026-06-10",
+      "level": "Школьный",
+      "status": "Завершено",
+      "points": 6
+    },
+    {
+      "id": 5,
+      "name": "Волонтёрская акция",
+      "category": "Внеучебная деятельность",
+      "date": "2026-09-01",
+      "level": "Школьный",
+      "status": "Скоро",
+      "points": 4
+    }
+  ]
+}
