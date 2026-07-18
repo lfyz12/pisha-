@@ -158,7 +158,7 @@ export default function AdminPage() {
                       <input
                         type="checkbox"
                         checked={policy[key as keyof AccessPolicy]}
-                        disabled={policySavingKey === key}
+                        disabled={policySavingKey !== null}
                         onChange={() => togglePolicy(key as keyof AccessPolicy)}
                       />
                       {label}

@@ -96,6 +96,7 @@ export default function AnalyticsPage() {
 
   const { rating, metrics } = useRatingData(courseParam);
   const ratingStudents: RatingStudent[] = rating.data?.data?.students ?? [];
+  const showTable = ratingStudents.length > 0;
 
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     isStudent ? (ratingStudents.find((s) => s.isCurrentUser)?.id ?? null) : null
@@ -222,9 +223,7 @@ export default function AnalyticsPage() {
       {rating.isLoading ? (
         <RatingTableSkeleton />
       ) : (
-        ratingStudents.length > 0 && (
-          <StudentRatingTable students={ratingStudents} activeCourse={activeCourse} />
-        )
+        showTable && <StudentRatingTable students={ratingStudents} activeCourse={activeCourse} />
       )}
 
       <AdminOnly>

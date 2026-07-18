@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StudentProjectsPanel } from "@/components/student-projects-panel";
-import { useAuthStore } from "@/stores";
+import { useAuthStore, toast } from "@/stores";
 import { useRatingData } from "@/hooks";
 import { cn, formatNumber } from "@/lib/utils";
 
@@ -23,8 +23,14 @@ export default function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState(false);
-  const [profileSaved, setProfileSaved] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, []);
 
   const isAdmin = currentUser?.role === "admin";
 
@@ -32,14 +38,11 @@ export default function ProfilePage() {
     e.preventDefault();
     if (profileSaving) return;
     setProfileSaving(true);
-    // Симуляция запроса: pending честный, «Сохранено» — только после завершения
-    setTimeout(() => {
+    // Симуляция запроса: pending честный, редактирование закрывается после завершения
+    saveTimeoutRef.current = setTimeout(() => {
       setProfileSaving(false);
-      setProfileSaved(true);
-      setTimeout(() => {
-        setProfileSaved(false);
-        setEditing(false);
-      }, 1200);
+      setEditing(false);
+      toast({ title: "Профиль сохранён" });
     }, 800);
   };
 
@@ -271,18 +274,13 @@ export default function ProfilePage() {
                   </button>
                   <button
                     type="submit"
-                    disabled={profileSaving || profileSaved}
+                    disabled={profileSaving}
                     className="px-5 py-2 bg-primary text-on-primary text-sm font-bold rounded-lg hover:opacity-90 active:scale-[0.99] transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {profileSaving ? (
                       <>
                         <Icon name="hourglass_empty" className="text-sm" />
                         Сохранение…
-                      </>
-                    ) : profileSaved ? (
-                      <>
-                        <Icon name="check" className="text-sm" />
-                        Сохранено
                       </>
                     ) : (
                       "Сохранить"

@@ -14,6 +14,7 @@ export default function OverviewPage() {
   const isAdmin = currentUser?.role === "admin";
 
   const { rating, metrics } = useRatingData();
+  // Статичные секции (стипендии, AI-превью) тоже скелетонятся — для визуальной когерентности страницы
   const isLoading = rating.isLoading || metrics.isLoading;
   const ratingStudents = rating.data?.data?.students ?? [];
   const ratingStats = rating.data?.data?.stats;
