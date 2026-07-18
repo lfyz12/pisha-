@@ -8,6 +8,7 @@ export interface AccessPolicy {
   allow_other_activities: boolean;
   allow_scoring_logs: boolean;
   allow_ai_rules: boolean;
+  allow_ai_chat: boolean;
   allow_global_notifications: boolean;
 }
 

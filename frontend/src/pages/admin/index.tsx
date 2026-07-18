@@ -134,6 +134,7 @@ export default function AdminPage() {
                   ["allow_other_activities", "Показывать чужую активность"],
                   ["allow_scoring_logs", "Разрешать журнал начислений"],
                   ["allow_ai_rules", "Разрешать просмотр AI-правил"],
+                  ["allow_ai_chat", "ИИ-чат и проекты"],
                   ["allow_global_notifications", "Показывать системные уведомления"],
                 ].map(([key, label]) => (
                   <label key={key} className="flex items-center gap-3 text-sm">

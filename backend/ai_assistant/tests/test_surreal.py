@@ -1,5 +1,6 @@
 """Tests for ai_assistant.services.surreal — the surrealdb client is mocked."""
 
+import threading
 from unittest.mock import Mock, patch
 
 from django.conf import settings
@@ -195,6 +196,53 @@ class RepositoryTests(SimpleTestCase):
     def test_search_rejects_unknown_table(self):
         with self.assertRaises(ValueError):
             surreal.search("other_table", [0.1], "q")
+
+    # -- thread safety ---------------------------------------------------------
+
+    def test_concurrent_calls_are_serialized_by_the_query_lock(self):
+        # query() fails loudly if two threads are inside it at once; the lock
+        # must prevent that and must actually be acquired per RPC.
+        inside = threading.Event()
+        errors = []
+
+        def guarded_query(*_args, **_kwargs):
+            if inside.is_set():
+                errors.append("concurrent query() call")
+            inside.set()
+            try:
+                threading.Event().wait(0.001)
+                return []
+            finally:
+                inside.clear()
+
+        self.client.query.side_effect = guarded_query
+        acquisitions = 0
+        real_lock = surreal._query_lock
+
+        class CountingLock:
+            def __enter__(self):
+                nonlocal acquisitions
+                acquisitions += 1
+                return real_lock.__enter__()
+
+            def __exit__(self, *exc):
+                return real_lock.__exit__(*exc)
+
+        def worker():
+            surreal.search("kb_chunk", [0.1], "q")
+            surreal.upsert_chunks("kb_chunk", "doc-1", {}, ["a"], [[0.1]])
+            surreal.delete_doc_chunks("kb_chunk", "doc-1")
+
+        with patch.object(surreal, "_query_lock", CountingLock()):
+            threads = [threading.Thread(target=worker) for _ in range(2)]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+
+        self.assertEqual(errors, [])
+        # 2 threads × (2 search queries + 2 upsert queries + 1 delete query).
+        self.assertEqual(acquisitions, 10)
 
 
 class ManagementCommandTests(SimpleTestCase):

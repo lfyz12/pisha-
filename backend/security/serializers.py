@@ -13,6 +13,7 @@ class AccessPolicySerializer(serializers.ModelSerializer):
             "allow_other_activities",
             "allow_scoring_logs",
             "allow_ai_rules",
+            "allow_ai_chat",
             "allow_global_notifications",
             "updated_at",
         ]

@@ -86,6 +86,19 @@ FULLTEXT_SEARCH_SQL = (
 _client: Any = None
 _client_lock = threading.Lock()
 
+# Serializes every RPC on the shared connection: the blocking websocket
+# client is not thread-safe, but gunicorn gthread workers call it from
+# several threads. QPS is low, so a single process-wide lock is cheap.
+_query_lock = threading.Lock()
+
+
+def _query(db: Any, statement: str, params: dict | None = None) -> Any:
+    """Run one SurrealQL statement on the shared client, serialized."""
+    with _query_lock:
+        if params is None:
+            return db.query(statement)
+        return db.query(statement, params)
+
 
 def _connect() -> Any:
     """Create and authenticate a new blocking SurrealDB connection.
@@ -142,7 +155,7 @@ def ensure_schema() -> None:
         statements.append(_define_vector_index_sql(table, settings.AI_EMBEDDING_DIM))
         statements.append(_define_fulltext_index_sql(table))
     for statement in statements:
-        db.query(statement)
+        _query(db, statement)
     logger.info("SurrealDB schema ensured for tables: %s", ", ".join(CHUNK_TABLES))
 
 
@@ -179,16 +192,18 @@ def upsert_chunks(
         for chunk_index, (text, embedding) in enumerate(zip(chunks, vectors))
     ]
     db = get_client()
-    db.query(DELETE_DOC_CHUNKS_SQL.format(table=table), {"doc_id": doc_id})
+    _query(db, DELETE_DOC_CHUNKS_SQL.format(table=table), {"doc_id": doc_id})
     if records:
-        db.query(INSERT_CHUNKS_SQL.format(table=table), {"records": records})
+        _query(db, INSERT_CHUNKS_SQL.format(table=table), {"records": records})
 
 
 def delete_doc_chunks(table: str, doc_id: str) -> None:
     """Delete every chunk of document ``doc_id`` from ``table``."""
     _validate_table(table)
-    get_client().query(
-        DELETE_DOC_CHUNKS_SQL.format(table=table), {"doc_id": doc_id}
+    _query(
+        get_client(),
+        DELETE_DOC_CHUNKS_SQL.format(table=table),
+        {"doc_id": doc_id},
     )
 
 
@@ -221,7 +236,8 @@ def search(
         params["categories"] = list(categories)
         category_filter = _CATEGORY_FILTER_SQL
 
-    vector_rows = db.query(
+    vector_rows = _query(
+        db,
         VECTOR_SEARCH_SQL.format(
             table=table,
             limit=limit,
@@ -230,7 +246,8 @@ def search(
         ),
         params,
     )
-    fulltext_rows = db.query(
+    fulltext_rows = _query(
+        db,
         FULLTEXT_SEARCH_SQL.format(
             table=table, limit=limit, category_filter=category_filter
         ),

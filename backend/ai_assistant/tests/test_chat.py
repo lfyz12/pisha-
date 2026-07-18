@@ -115,6 +115,27 @@ class ChatSessionTests(TestCase):
         response = self.client.get(url, secure=True)
         self.assertEqual(response.status_code, 404)
 
+    def test_list_messages_returns_last_100_in_chronological_order(self):
+        session = ChatSession.objects.create(student=self.student)
+        base = timezone.now() - timedelta(seconds=200)
+        for index in range(1, 106):
+            message = ChatMessage.objects.create(
+                session=session, role=ChatMessage.Role.USER, content=f"msg-{index}"
+            )
+            ChatMessage.objects.filter(pk=message.pk).update(
+                created_at=base + timedelta(seconds=index)
+            )
+
+        url = f"{CHAT_SESSIONS_URL}{session.id}/messages/"
+        response = self.client.get(url, secure=True)
+
+        self.assertEqual(response.status_code, 200)
+        contents = [m["content"] for m in response.data["data"]]
+        self.assertEqual(len(contents), 100)
+        self.assertEqual(contents[0], "msg-6")
+        self.assertEqual(contents[-1], "msg-105")
+        self.assertEqual(contents, [f"msg-{i}" for i in range(6, 106)])
+
     def test_list_forbidden_when_flag_off(self):
         self._set_allow_ai_chat(False)
         response = self.client.get(CHAT_SESSIONS_URL, secure=True)

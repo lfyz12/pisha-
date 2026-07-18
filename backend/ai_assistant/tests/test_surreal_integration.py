@@ -7,8 +7,10 @@ container credentials root/testpass), e.g.:
     docker run -d --name surreal-fix-test -p 18000:8000 \
         surrealdb/surrealdb:v3.2 start --user root --pass testpass memory
     SURREALDB_TEST_URL=ws://localhost:18000 \
-        python manage.py test ai_assistant.tests.test_surreal_integration \
-        --settings=test_settings_local
+        python manage.py test ai_assistant.tests.test_surreal_integration
+
+Runs under any test settings module (a local settings file that points the
+test database at a throwaway DB is enough).
 
 Uses AI_EMBEDDING_DIM=8 so vectors stay tiny; ensure_schema() reads the
 dimension at call time, so the index is (re)defined for the test dimension.

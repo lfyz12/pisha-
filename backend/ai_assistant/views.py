@@ -426,7 +426,8 @@ def chat_message_list_view(request, pk):
     if error is not None:
         return error
     session = get_object_or_404(ChatSession, pk=pk, student=student)
-    messages = session.messages.order_by("created_at")[:100]
+    # The most recent 100 messages, returned in chronological order.
+    messages = list(session.messages.order_by("-created_at")[:100])[::-1]
     data = [_serialize_message(m) for m in messages]
     return Response({"data": data, "status": 200})
 
@@ -436,11 +437,11 @@ def chat_message_list_view(request, pk):
 @throttle_classes([AIChatRateThrottle])
 def chat_stream_view(request, pk):
     """Stream the assistant response for a chat session via SSE."""
-    student, error = _get_student_or_403(request.user)
+    error = _check_ai_chat_access(request)
     if error is not None:
         return error
 
-    error = _check_ai_chat_access(request)
+    student, error = _get_student_or_403(request.user)
     if error is not None:
         return error
 
