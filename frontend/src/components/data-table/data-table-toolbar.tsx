@@ -1,6 +1,6 @@
 import type { Table } from "@tanstack/react-table";
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { DataTableViewOptions } from "./data-table-column-visibility";
 
@@ -36,7 +36,7 @@ export function DataTableToolbar<TData>({
             className="h-8 px-2 lg:px-3"
           >
             Reset
-            <X className="ml-2 h-4 w-4" />
+            <Icon name="close" className="ml-2 text-base" />
           </Button>
         )}
       </div>

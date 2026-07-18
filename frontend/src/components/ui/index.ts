@@ -71,17 +71,6 @@ export { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "./
 export { Progress } from "./progress";
 export { ScrollArea, ScrollBar } from "./scroll-area";
 export {
-  Command,
-  CommandDialog,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandShortcut,
-  CommandSeparator,
-} from "./command";
-export {
   Sheet,
   SheetPortal,
   SheetOverlay,

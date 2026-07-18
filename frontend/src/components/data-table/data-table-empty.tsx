@@ -1,4 +1,4 @@
-import { Inbox } from "lucide-react";
+import { Icon } from "@/components/ui/icon";
 
 interface DataTableEmptyProps {
   title?: string;
@@ -11,7 +11,7 @@ export function DataTableEmpty({
 }: DataTableEmptyProps) {
   return (
     <div className="flex h-[400px] flex-col items-center justify-center rounded-md border">
-      <Inbox className="h-12 w-12 text-muted-foreground" />
+      <Icon name="inbox" className="text-5xl text-muted-foreground" />
       <h3 className="mt-4 text-lg font-semibold">{title}</h3>
       <p className="mt-2 text-sm text-muted-foreground">{description}</p>
     </div>

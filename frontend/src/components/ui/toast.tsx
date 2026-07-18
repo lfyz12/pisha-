@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Icon } from "@/components/ui/icon";
 
 const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
@@ -70,7 +70,7 @@ const ToastClose = React.forwardRef<HTMLButtonElement, React.ComponentProps<"but
       toast-close=""
       {...props}
     >
-      <X className="h-4 w-4" />
+      <Icon name="close" className="text-base" />
     </button>
   )
 );

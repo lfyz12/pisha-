@@ -1,18 +1,26 @@
+import { Suspense, type ReactNode } from "react";
 import { createBrowserRouter, Navigate } from "react-router";
 import RootLayout from "@/layouts/root-layout";
 import AuthLayout from "@/layouts/auth-layout";
 import DashboardLayout from "@/layouts/dashboard-layout";
-import LoginPage from "@/pages/auth/login";
-import ForgotPasswordPage from "@/pages/auth/forgot-password";
-import OverviewPage from "@/pages/overview";
-import AnalyticsPage from "@/pages/analytics";
-import ProfilePage from "@/pages/profile";
-import AdminPage from "@/pages/admin";
-import RatingPage from "@/pages/rating";
-import ScholarshipsPage from "@/pages/scholarships";
-import ChatPage from "@/pages/chat";
-import NotFoundPage from "@/pages/errors/not-found";
-import ForbiddenPage from "@/pages/errors/forbidden";
+import { PageSkeleton } from "@/components/page-skeleton";
+import {
+  LoginPage,
+  ForgotPasswordPage,
+  OverviewPage,
+  AnalyticsPage,
+  ProfilePage,
+  AdminPage,
+  RatingPage,
+  ScholarshipsPage,
+  ChatPage,
+  NotFoundPage,
+  ForbiddenPage,
+} from "./lazy-pages";
+
+const lazyElement = (element: ReactNode) => (
+  <Suspense fallback={<PageSkeleton />}>{element}</Suspense>
+);
 
 export const router = createBrowserRouter([
   {
@@ -27,26 +35,26 @@ export const router = createBrowserRouter([
         path: "auth",
         element: <AuthLayout />,
         children: [
-          { index: true, element: <LoginPage /> },
-          { path: "login", element: <LoginPage /> },
-          { path: "forgot-password", element: <ForgotPasswordPage /> },
+          { index: true, element: lazyElement(<LoginPage />) },
+          { path: "login", element: lazyElement(<LoginPage />) },
+          { path: "forgot-password", element: lazyElement(<ForgotPasswordPage />) },
         ],
       },
       {
         path: "dashboard",
         element: <DashboardLayout />,
         children: [
-          { index: true, element: <OverviewPage /> },
-          { path: "analytics", element: <AnalyticsPage /> },
-          { path: "profile", element: <ProfilePage /> },
-          { path: "admin", element: <AdminPage /> },
-          { path: "rating", element: <RatingPage /> },
-          { path: "scholarships", element: <ScholarshipsPage /> },
-          { path: "chat", element: <ChatPage /> },
+          { index: true, element: lazyElement(<OverviewPage />) },
+          { path: "analytics", element: lazyElement(<AnalyticsPage />) },
+          { path: "profile", element: lazyElement(<ProfilePage />) },
+          { path: "admin", element: lazyElement(<AdminPage />) },
+          { path: "rating", element: lazyElement(<RatingPage />) },
+          { path: "scholarships", element: lazyElement(<ScholarshipsPage />) },
+          { path: "chat", element: lazyElement(<ChatPage />) },
         ],
       },
-      { path: "forbidden", element: <ForbiddenPage /> },
-      { path: "*", element: <NotFoundPage /> },
+      { path: "forbidden", element: lazyElement(<ForbiddenPage />) },
+      { path: "*", element: lazyElement(<NotFoundPage />) },
     ],
   },
 ]);
