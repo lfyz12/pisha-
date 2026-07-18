@@ -125,8 +125,10 @@ export function Sidebar({ isOpen, onClose, isMobile }: SidebarProps) {
           />
         )}
         <aside
+          inert={!isOpen}
+          aria-hidden={!isOpen}
           className={cn(
-            "fixed top-0 left-0 h-full w-64 glass z-50 shadow-2xl transition-transform duration-300 ease-out",
+            "fixed top-0 left-0 h-full w-64 bg-surface-card z-50 shadow-2xl transition-transform duration-300 ease-out",
             isOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
