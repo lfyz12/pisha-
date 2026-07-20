@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { RouterProvider } from "react-router";
 import { router } from "@/routes";
 import { Toaster } from "@/components/ui/toaster";
@@ -15,6 +16,7 @@ export default function App() {
     <>
       <RouterProvider router={router} />
       <Toaster />
+      <Analytics />
     </>
   );
 }
